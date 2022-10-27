@@ -1,6 +1,5 @@
 #include <linux/module.h> //needed by any kernel modules
 #include <linux/init.h> //driver initialization entry points module_init()/module_exit()
-// #include <linux/kernel.h> //printk()
 #include <linux/fs.h> //file read(), write(), open()...
 #include <linux/uaccess.h> //copy_from_user(), copy_to_user()
 
@@ -137,4 +136,4 @@ module_exit ( lab4_driver_exit );
 
 MODULE_LICENSE ("GPL");
 MODULE_AUTHOR("bobo chen (bobo511326.ee10@nycu.edu.tw)");
-MODULE_DESCRIPTION("Lab4 driver")
+MODULE_DESCRIPTION("Lab4 driver");
