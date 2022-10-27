@@ -19,17 +19,15 @@ void sigint_handler(int signo)
 
 int main(int argc, char *argv[])
 {
-    if (argc != 4)
-    {
-        fprintf(stderr, "Usage: ./reader <server_ip> <port> <device_path>"); //將後方string流到terminal中顯示
-        exit(EXIT_FAILURE);                                                  //等同於exit(非0)，不正常或有錯誤的結束
+    if (argc != 4){
+        fprintf(stderr, "Usage: ./reader <server_ip> <port> <device_path>"); 
+        exit(EXIT_FAILURE);
     }
 
     signal(SIGINT, sigint_handler); //當在terminal輸入ctrl+C，做sigint_handler這個函式
 
-    if ((connfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) //AF_INET:伺服器對伺服器傳輸；SOCK_STREAM:使用TCP傳輸
-    {
-        perror("socket()"); //在傳輸錯誤訊息前面加上 socket()
+    if ((connfd = socket(AF_INET, SOCK_STREAM, 0)) == -1){
+        perror("Failed to open socket.");
         exit(EXIT_FAILURE);
     }
 
@@ -40,14 +38,12 @@ int main(int argc, char *argv[])
     cli_addr.sin_addr.s_addr = inet_addr(argv[1]);     //client IP
     cli_addr.sin_port = htons((u_short)atoi(argv[2])); //port
 
-    if (connect(connfd, (struct sockaddr *)&cli_addr, sizeof(cli_addr)) == -1)
-    {
-        perror("connect()");
+    if (connect(connfd, (struct sockaddr *)&cli_addr, sizeof(cli_addr)) == -1){
+        perror("Connection error");
         exit(EXIT_FAILURE);
     }
 
-    if ((fd = open(argv[3], O_RDWR)) < 0)
-    {
+    if ((fd = open(argv[3], O_RDWR)) < 0){
         perror(argv[3]);
         exit(EXIT_FAILURE);
     }
@@ -55,23 +51,19 @@ int main(int argc, char *argv[])
     int ret;
     char buf[16] = {};
 
-    while (true)
-    {
-        if ((ret = read(fd, buf, sizeof(buf))) == -1)
-        {
-            perror("read()");
+    while (1){
+        if ((ret = read(fd, buf, sizeof(buf))) == -1){
+            perror("Failed to read()");
             exit(EXIT_FAILURE);
         }
 
-        for (int i = 0; i < 16; ++i)
-        {
+        for (int i = 0; i < 16; ++i){
             printf("%d ", buf[i]);
         }
         printf("\n");
 
-        if (write(connfd, buf, 16) == -1)
-        {
-            perror("write()");
+        if (write(connfd, buf, 16) == -1){
+            perror("Failed to write()");
             exit(EXIT_FAILURE);
         }
 
