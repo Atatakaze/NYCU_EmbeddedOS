@@ -1,10 +1,10 @@
-# include <linux/module.h> //needed by any kernel modules
-
-# include <linux/init.h> //driver initialization entry points module_init()/module_exit()
-// # include <linux/kernel.h> //printk()
-# include <linux/fs.h> //file read(), write(), open()...
-
+#include <linux/module.h> //needed by any kernel modules
+#include <linux/init.h> //driver initialization entry points module_init()/module_exit()
+// #include <linux/kernel.h> //printk()
+#include <linux/fs.h> //file read(), write(), open()...
 #include <linux/uaccess.h> //copy_from_user(), copy_to_user()
+
+char buf_kernel; //store the value written into the driver
 
 //static: this function can not be used by other .c
 static int seg_for_c[27] = {
@@ -37,21 +37,43 @@ static int seg_for_c[27] = {
     0b0000000000000000
 };
 
+static int __init lab4_driver_init ( void );
+static void __exit lab4_driver_exit ( void );
 
-char buf_kernel; //store the value written into the driver
 
-struct file_operations lab4_driver_fops = {
-    read : lab4_driver_read,
-    write : lab4_driver_write,
-    open : lab4_driver_open
+/***************** Driver functions ******************/
+static ssize_t lab4_driver_read ( struct file *fp , char *buf , size_t count , loff_t *fpos );
+static ssize_t lab4_driver_write ( struct file *fp , const char *buf , size_t count ,loff_t * fpos );
+static int lab4_driver_open ( struct inode *inode , struct file *fp);
+static int lab4_driver_release ( struct inode *inode , struct file *fp);
+/*****************************************************/
+
+static struct file_operations fops = {
+    .owner      = THIS_MODULE, 
+    .read       = lab4_driver_read,
+    .write      = lab4_driver_write,
+    .open       = lab4_driver_open, 
+    .release    = lab4_driver_release,
 };
+
+static int lab4_driver_open ( struct inode *inode , struct file *fp) {
+    pr_info("Device File Opened...!!!\n");
+    return 0;
+}
+
+static int lab4_driver_release ( struct inode *inode , struct file *fp) {
+    pr_info("Device File Closed...!!!\n");
+    return 0;
+}
 
 // File Operations
 static ssize_t lab4_driver_read ( struct file *fp , char *buf , size_t count , loff_t *fpos ) {
-    pr_info("Call Driver read \n");
+    unsigned int i;
+    int index, ret;
+    char seg[16];
+    //pr_info("Call Driver read \n");
 
     //change the char to 16seg bits by ASCII
-    int index;
     if(buf_kernel <= 'Z' && buf_kernel >= 'A'){
         index=(int)(buf_kernel-'A');
     }
@@ -63,13 +85,12 @@ static ssize_t lab4_driver_read ( struct file *fp , char *buf , size_t count , l
     }
     
     //change the type from int to char with 16 bits
-    char seg[16];
-    for(int i=0; i < 16; i++){
+    for(i=0; i < 16; i++){
         seg[15-i] = (seg_for_c[index] >> i) & (0b0000000000000001);
     }
     
     //copy seg to buf
-    int ret = copy_to_user(buf, seg, 16); //suceed: ret=0; fail: ret=count
+    ret = copy_to_user(buf, seg, 16); //suceed: ret=0; fail: ret=count
     if(ret){
         return -1;
     }
@@ -78,10 +99,11 @@ static ssize_t lab4_driver_read ( struct file *fp , char *buf , size_t count , l
 }
 
 static ssize_t lab4_driver_write ( struct file *fp , const char *buf , size_t count ,loff_t * fpos ) {
-    pr_info("Call driver write \n");
+    int ret;
+    //pr_info("Call driver write \n");
     
     //copy from buf to buf_kernel
-    int ret = copy_from_user(&buf_kernel, buf, count); //suceed: ret=0; fail: ret=count
+    ret = copy_from_user(&buf_kernel, buf, count); //suceed: ret=0; fail: ret=count
     if(ret){
         return -1;
     }
@@ -91,17 +113,12 @@ static ssize_t lab4_driver_write ( struct file *fp , const char *buf , size_t co
     return count;
 }
 
-static int lab4_driver_open ( struct inode *inode , struct file *fp) {
-    pr_info("Call driver open \n");
-    return 0;
-}
-
 # define MAJOR_NUM 244
 # define DRIVER_NAME "lab4_driver"
 
 static int __init lab4_driver_init ( void ) {
     pr_info("Call driver init \n");
-    if( register_chrdev ( MAJOR_NUM , DRIVER_NAME , &lab4_driver_fops ) < 0) {
+    if( register_chrdev ( MAJOR_NUM , DRIVER_NAME , &fops ) < 0) {
         pr_info(" Can not get major %d\n", MAJOR_NUM );
         return (-EBUSY);
     }
