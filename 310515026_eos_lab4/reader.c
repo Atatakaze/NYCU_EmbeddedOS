@@ -1,9 +1,7 @@
-#include <cstdio>   // fprintf(), perror()
-#include <cstdlib>  // exit()
 #include <cstring>  // memset()
 #include <csignal>  // signal()
 #include <fcntl.h>  // open()
-#include <unistd.h> //unix standard -> driver read(), write(), close()
+#include <unistd.h> // unix standard -> driver read(), write(), close()
 
 #include <sys/socket.h> // socket(), connect()
 #include <netinet/in.h> // struct sockaddr_in
@@ -21,16 +19,16 @@ int main(int argc, char *argv[])
 {
     if (argc != 4)
     {
-        fprintf(stderr, "Usage: ./reader <server_ip> <port> <device_path>"); //將後方string流到terminal中顯示
-        exit(EXIT_FAILURE);                                                  //等同於exit(非0)，不正常或有錯誤的結束
+        pr_info(stderr, "Usage: ./reader <server_ip> <port> <device_path>"); //將後方string流到terminal中顯示
+        return 0;                                                  //等同於exit(非0)，不正常或有錯誤的結束
     }
 
     signal(SIGINT, sigint_handler); //當在terminal輸入ctrl+C，做sigint_handler這個函式
 
     if ((connfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) //AF_INET:伺服器對伺服器傳輸；SOCK_STREAM:使用TCP傳輸
     {
-        perror("socket()"); //在傳輸錯誤訊息前面加上 socket()
-        exit(EXIT_FAILURE);
+        pr_info("socket()"); //在傳輸錯誤訊息前面加上 socket()
+        return 0;
     }
 
     //設定client端的ip和port
@@ -42,14 +40,14 @@ int main(int argc, char *argv[])
 
     if (connect(connfd, (struct sockaddr *)&cli_addr, sizeof(cli_addr)) == -1)
     {
-        perror("connect()");
-        exit(EXIT_FAILURE);
+        pr_info("connect()");
+        return 0;
     }
 
     if ((fd = open(argv[3], O_RDWR)) < 0)
     {
-        perror(argv[3]);
-        exit(EXIT_FAILURE);
+        pr_info(argv[3]);
+        return 0;
     }
 
     int ret;
@@ -59,20 +57,20 @@ int main(int argc, char *argv[])
     {
         if ((ret = read(fd, buf, sizeof(buf))) == -1)
         {
-            perror("read()");
-            exit(EXIT_FAILURE);
+            pr_info("read()");
+            return 0;
         }
 
         for (int i = 0; i < 16; ++i)
         {
-            printf("%d ", buf[i]);
+            pr_info("%d ", buf[i]);
         }
-        printf("\n");
+        pr_info("\n");
 
         if (write(connfd, buf, 16) == -1)
         {
-            perror("write()");
-            exit(EXIT_FAILURE);
+            pr_info("write()");
+            return 0;
         }
 
         sleep(1);
