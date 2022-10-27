@@ -1,4 +1,4 @@
-#include <cstring>  // memset()
+#include <string>  // memset()
 #include <csignal>  // signal()
 #include <fcntl.h>  // open()
 #include <unistd.h> // unix standard -> driver read(), write(), close()
