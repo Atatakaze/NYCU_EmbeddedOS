@@ -109,7 +109,7 @@ static ssize_t lab4_driver_write ( struct file *fp , const char *buf , size_t co
     }
     
     //pr_info("%d\n", count);
-    pr_info("buf_kernnel: %c\n", buf_kernal);
+    pr_info("buf_kernel: %c\n", buf_kernel);
     return count;
 }
 
