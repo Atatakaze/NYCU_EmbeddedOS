@@ -1,8 +1,10 @@
 #include <linux/kernel.h>
 #include <linux/fs.h>
 #include <fcntl.h>  // open()
-#include <unistd.h> //unix standard -> driver read(), write(), close()
+#include <unistd.h> // unix standard -> driver read(), write(), close()
 #include <string.h>
+#include <stdio.h>  // fprintf(), perror()
+#include <stdlib.h> // exit()
 
 #include <stdio.h>
 
@@ -15,10 +17,11 @@ int main(int argc, char *argv[])
     sprintf(data, "%s", argv[1]);
     if ((f = open("/dev/lab4_driver", O_RDWR)) < 0)
     {
-        pr_info("Failure to open /dev/lab4_driver");
-        return 0;
+        perror("Failure to open /dev/lab4_driver");
+        exit(EXIT_FAILURE);
     }
-    pr_info("the input name: %s\n", data);
+
+    printf("The input name: %s\n", data);
 
     for (i=0; i < strlen(data); i++)
     {

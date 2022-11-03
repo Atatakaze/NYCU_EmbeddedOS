@@ -1,6 +1,7 @@
-#include <linux/module.h> //needed by any kernel modules
-#include <linux/init.h> //driver initialization entry points module_init()/module_exit()
-#include <linux/fs.h> //file read(), write(), open()...
+# include <linux/init.h> //driver initialization entry points module_init()/module_exit()
+# include <linux/module.h> //needed by any kernel modules
+# include <linux/kernel.h> //printk()
+# include <linux/fs.h> //file read(), write(), open()...
 #include <linux/uaccess.h> //copy_from_user(), copy_to_user()
 
 char buf_kernel; //store the value written into the driver
@@ -39,9 +40,8 @@ static int seg_for_c[27] = {
 static int __init lab4_driver_init ( void );
 static void __exit lab4_driver_exit ( void );
 
-
 /***************** Driver functions ******************/
-static ssize_t lab4_driver_read ( struct file *fp , char *buf , size_t count , loff_t *fpos );
+static ssize_t lab4_driver_read ( struct file *fp , char __user *buf , size_t count , loff_t *fpos );
 static ssize_t lab4_driver_write ( struct file *fp , const char *buf , size_t count ,loff_t * fpos );
 static int lab4_driver_open ( struct inode *inode , struct file *fp);
 static int lab4_driver_release ( struct inode *inode , struct file *fp);
@@ -66,11 +66,11 @@ static int lab4_driver_release ( struct inode *inode , struct file *fp) {
 }
 
 // File Operations
-static ssize_t lab4_driver_read ( struct file *fp , char *buf , size_t count , loff_t *fpos ) {
-    unsigned int i;
-    int index, ret;
+static ssize_t lab4_driver_read ( struct file *fp , char __user *buf , size_t count , loff_t *fpos ) {
+    int i, index, ret;
     char seg[16];
-    //pr_info("Call Driver read \n");
+    
+    pr_info("Call driver read.\n");
 
     //change the char to 16seg bits by ASCII
     if(buf_kernel <= 'Z' && buf_kernel >= 'A'){
@@ -89,7 +89,7 @@ static ssize_t lab4_driver_read ( struct file *fp , char *buf , size_t count , l
     }
     
     //copy seg to buf
-    ret = copy_to_user(buf, seg, 16); //suceed: ret=0; fail: ret=count
+    ret = copy_to_user(buf, seg, 16); //succeed: ret=0; fail: ret=count
     if(ret){
         return -1;
     }
@@ -99,7 +99,8 @@ static ssize_t lab4_driver_read ( struct file *fp , char *buf , size_t count , l
 
 static ssize_t lab4_driver_write ( struct file *fp , const char *buf , size_t count ,loff_t * fpos ) {
     int ret;
-    //pr_info("Call driver write \n");
+    
+    pr_info("Call driver write.\n");
     
     //copy from buf to buf_kernel
     ret = copy_from_user(&buf_kernel, buf, count); //suceed: ret=0; fail: ret=count
@@ -108,15 +109,16 @@ static ssize_t lab4_driver_write ( struct file *fp , const char *buf , size_t co
     }
     
     //pr_info("%d\n", count);
-    //pr_info("%c\n", buf_kernal);
+    pr_info("buf_kernnel: %c\n", buf_kernal);
     return count;
 }
 
-# define MAJOR_NUM 244
+# define MAJOR_NUM 255
 # define DRIVER_NAME "lab4_driver"
 
 static int __init lab4_driver_init ( void ) {
-    pr_info("Call driver init \n");
+    pr_info("Call driver init.\n");
+
     if( register_chrdev ( MAJOR_NUM , DRIVER_NAME , &fops ) < 0) {
         pr_info(" Can not get major %d\n", MAJOR_NUM );
         return (-EBUSY);
@@ -128,7 +130,7 @@ static int __init lab4_driver_init ( void ) {
 
 static void __exit lab4_driver_exit ( void ) {
     unregister_chrdev ( MAJOR_NUM ,  DRIVER_NAME );
-    pr_info(" call exit \n");
+    pr_info("Call exit.\n");
 }
 
 module_init ( lab4_driver_init );
