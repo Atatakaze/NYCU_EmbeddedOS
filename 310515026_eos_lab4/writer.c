@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
     sprintf(data, "%s", argv[1]);
     if ((f = open("/dev/lab4_driver", O_RDWR)) < 0)
     {
-        perror("Failure to open /dev/lab4_driver");
+        perror("/dev/lab4_driver");
         exit(EXIT_FAILURE);
     }
 

@@ -1,10 +1,7 @@
 #!/bin/sh
 
-set -x
-# set -e
+#sudo rmmod -f lab4_driver
+#sudo insmod lab4_driver.ko
 
-rmmod -f mydev
-insmod mydev.ko
-
-./writer abcd &
-./reader 192.168.0.12 8688 /dev/mydev
+sudo ./writer bobo &
+sudo ./reader 192.168.0.20 1234 /dev/lab4_driver
