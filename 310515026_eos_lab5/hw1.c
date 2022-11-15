@@ -7,6 +7,7 @@
 
 # include <stdio.h>
 
+
 typedef struct n_case{
     // number of mild case in the area
     int mild;
@@ -19,20 +20,20 @@ void menu_page(int *state)
 {
     int input_n = 0;
     
-    printf("==========================\n");
+    printf("\n==========================\n");
     printf("1. Confirmed case\n");
     printf("2. Reporting system\n");
     printf("3. Exit\n");
 
-    scanf("%d", &input_n);
+    scanf(" %d", &input_n);
 
     if( input_n == 1 || input_n == 2 || input_n == 3){
         *state = input_n;
     }
 
     else{
-        printf("==========================\n");
-        printf("Wrong input !!!\n");
+        printf(" > Wrong input @ menu page !!!\n");
+        printf(" > input = %d\n", input_n);
     }
 }
 
@@ -43,27 +44,32 @@ void query_page(int *state, n_case *area)
     int input_n;
     char input_c;
     
-    
-    printf("==========================\n");
-    for(i = 0; i < 9; i++)
+    printf("\n==========================\n");
+    for(i = 0; i < 9; i++){
         printf("%d : %d\n", i, (area[i].mild + area[i].severe));
+    }
 
-    scanf("%c", &input_c);
+    printf("(Press 'q' to leave query page or select one area to check (0-8).) ");
+    scanf(" %c", &input_c);
 
     if(input_c == 'q'){
         *state = 0;
+        //printf("Press 'q' @ query page.\n");
     }
     else{
-        input_n = (int)input_c;
+        input_n = ((int)input_c - 48);
+        //printf("input_c -> input_n : %c -> %d\n", input_c, input_n);
 
         if(input_n < 0 || input_n > 8){
-            printf("==========================\n");
-            printf("Wrong input !!!\n");
+            printf(" > Wrong input @ query page !!!\n");
+            printf(" > input_n : %d\n", input_n);
         }
         else{
-            printf("==========================\n");
+            printf("\n==========================\n");
             printf("Mild : %d\n", area[input_n].mild);
             printf("Severe : %d\n", area[input_n].severe);
+            printf("(Press any key to leave this page.) ");
+            scanf(" %c", &input_c);
         }
     }
 }
@@ -74,15 +80,15 @@ void report_page(int *state, n_case *area)
     int input_n, number;
     char input_c;
     
-    printf("==========================\n");
+    printf("\n==========================\n");
     printf("Area (0~8) : ");
-    scanf("%d", &input_n);
+    scanf(" %d", &input_n);
 
     printf("Mild or Severe ('m' or 's') : ");
-    scanf("%c", &input_c);
+    scanf(" %c", &input_c);
 
     printf("The number of confirmed case : ");
-    scanf("%d", &number);
+    scanf(" %d", &number);
 
     if(input_c == 'm'){
         area[input_n].mild += number;
@@ -91,11 +97,11 @@ void report_page(int *state, n_case *area)
         area[input_n].severe += number;
     }
     else{
-        printf("==========================\n");
-        printf("Wrong input !!!\n");
+        printf(" > Wrong input @ report page !!!\n");
     }
 
-    scanf("%c", &input_c);
+    printf("(Press 'e' to leave this page or 'c' to report another case.) ");
+    scanf(" %c", &input_c);
     if(input_c == 'e'){
         *state = 0;
     }
@@ -135,6 +141,7 @@ int main()
         }
         /* Exit program */
         else{
+            printf("Press 3 -> exiting program ...\n");
             break;
         }
     }
