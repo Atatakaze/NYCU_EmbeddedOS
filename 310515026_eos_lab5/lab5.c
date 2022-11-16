@@ -1,17 +1,15 @@
 #include <arpa/inet.h> //htons, ntohs
 #include <errno.h>     /* Errors */
+#include <netdb.h>
+#include <netinet/in.h> //struct sockaddr_in
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <netdb.h>
-#include <netinet/in.h> //struct sockaddr_in
 #include <sys/socket.h> //the functions of socket
 #include <sys/types.h>  /* Primitive System Data Types */
 #include <unistd.h> //execlp()
 #include <sys/wait.h>   //waitpid
 #include <signal.h> //signal
-
-#define BUFSIZE 1024
 
 pid_t childpid; /* variable to store the child’s pid */
 
@@ -30,7 +28,7 @@ void childfunc(int connfd)
     exit(0);
 }
 
-int passivesock(const char *port, const char *transport, int qlen)
+int passivesock(const char *service, const char *transport, int qlen)
 {
     struct servent *pse;    /* pointer to service information entry */
     struct sockaddr_in sin; /* an Internet endpoint address */
@@ -41,10 +39,10 @@ int passivesock(const char *port, const char *transport, int qlen)
     sin.sin_addr.s_addr = INADDR_ANY;
 
     /* Map service name to port number */
-    if ((pse = getservbyname(port, transport)))
+    if ((pse = getservbyname(service, transport)))
         sin.sin_port = htons(ntohs((unsigned short)pse->s_port));
-    else if ((sin.sin_port = htons((unsigned short)atoi(port))) == 0)
-        printf("Can’t find \"%s\" service entry\n", port);
+    else if ((sin.sin_port = htons((unsigned short)atoi(service))) == 0)
+        printf("Can’t find \"%s\" service entry\n", service);
 
     /* Use protocol to choose a socket type */
     if (strcmp(transport, "udp") == 0)
@@ -59,11 +57,11 @@ int passivesock(const char *port, const char *transport, int qlen)
 
     /* Bind the socket */
     if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) < 0)
-        printf("Can't bind to port %s : %s\n", port, strerror(errno));
+        printf("Can't bind to port %s : %s\n", service, strerror(errno));
 
     /* Set the maximum number of waiting connection */
     if (type == SOCK_STREAM && listen(s, qlen) < 0)
-        printf("Can't listen on port %s : %s\n", port, strerror(errno));
+        printf("Can't listen on port %s : %s\n", service, strerror(errno));
 
     return s;
 }
@@ -74,8 +72,9 @@ int main(int argc, char *argv[])
     struct sockaddr_in addr_cln;
     socklen_t sLen = sizeof(addr_cln);
 
-    if (argc != 2)
+    if (argc != 2){
         printf("Usage: %s port\n", argv[0]);
+    }
 
     /* create socket and bind socket to port */
     sockfd = passivesock(argv[1], "tcp", 10);
@@ -91,28 +90,26 @@ int main(int argc, char *argv[])
             printf("Error : accept ()\n");
         }
 
+        /* now create new process */
         childpid = fork();
-        
+
         /* child process */
         if (childpid == 0){
             childfunc(connfd);
             close(connfd);
             break;
         }
-        
         /* parent process */
-        else if (childpid > 0){
+        else if (childpid > 0){ 
             printf("Train ID: %d\n", childpid);
-            break;
+            
         }
-
-        /* fork error */
-        else {
+        else{
             perror("fork error");
             break;
         }
+    }
 
-    /* close server socket */
     close(sockfd);
     return 0;
 }
