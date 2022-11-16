@@ -11,19 +11,16 @@
 #include <sys/wait.h>   //waitpid
 #include <signal.h> //signal
 
-pid_t childpid; /* variable to store the child’s pid */
+pid_t childpid;
 
-void handler(int signum) //kill the zombie process
+void handler(int signum)
 {
     while (waitpid(-1, NULL, WNOHANG) > 0);
 }
 
 void childfunc(int connfd)
 {
-
-    /* duplicate stdout to s */
     dup2(connfd, STDOUT_FILENO);
-    //close(connfd);
     execlp("sl", "sl", "-l", NULL);
     exit(0);
 }
@@ -102,7 +99,6 @@ int main(int argc, char *argv[])
         /* parent process */
         else if (childpid > 0){ 
             printf("Train ID: %d\n", childpid);
-            
         }
         else{
             perror("fork error");
