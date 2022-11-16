@@ -25,44 +25,6 @@ void childfunc(int connfd)
     exit(0);
 }
 
-// int passivesock(const char *service, const char *transport, int qlen)
-// {
-//     struct servent *pse;    /* pointer to service information entry */
-//     struct sockaddr_in sin; /* an Internet endpoint address */
-//     int s, type;            /* socket descriptor and socket type */
-
-//     memset(&sin, 0, sizeof(sin));
-//     sin.sin_family = AF_INET;
-//     sin.sin_addr.s_addr = INADDR_ANY;
-
-//     /* Map service name to port number */
-//     if ((pse = getservbyname(service, transport)))
-//         sin.sin_port = htons(ntohs((unsigned short)pse->s_port));
-//     else if ((sin.sin_port = htons((unsigned short)atoi(service))) == 0)
-//         printf("Can’t find \"%s\" service entry\n", service);
-
-//     /* Use protocol to choose a socket type */
-//     if (strcmp(transport, "udp") == 0)
-//         type = SOCK_DGRAM; //
-//     else
-//         type = SOCK_STREAM; //
-
-//     /* Allocate a socket */
-//     s = socket(PF_INET, type, 0);
-//     if (s < 0)
-//         printf("Can't create socket : %s\n", strerror(errno));
-
-//     /* Bind the socket */
-//     if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) < 0)
-//         printf("Can't bind to port %s : %s\n", service, strerror(errno));
-
-//     /* Set the maximum number of waiting connection */
-//     if (type == SOCK_STREAM && listen(s, qlen) < 0)
-//         printf("Can't listen on port %s : %s\n", service, strerror(errno));
-
-//     return s;
-// }
-
 int main(int argc, char *argv[])
 {
     int sockfd, connfd; /* socket descriptor */
@@ -73,47 +35,19 @@ int main(int argc, char *argv[])
         printf("Usage: %s port\n", argv[0]);
     }
 
-    /* create socket and bind socket to port */
-    //sockfd = passivesock(argv[1], "tcp", 10);
-
-
-
-    struct servent *pse;    /* pointer to service information entry */
-    struct sockaddr_in sin; /* an Internet endpoint address */
-    int s, type;            /* socket descriptor and socket type */
-
-    memset(&sin, 0, sizeof(sin));
-    sin.sin_family = AF_INET;
-    sin.sin_addr.s_addr = INADDR_ANY;
-
-    /* Map service name to port number */
-    if ((pse = getservbyname(argv[1], "tcp")))
-        sin.sin_port = htons(ntohs((unsigned short)pse->s_port));
-    else if ((sin.sin_port = htons((unsigned short)atoi(argv[1]))) == 0)
-        printf("Can’t find \"%s\" service entry\n", argv[1]);
-
-    /* Use protocol to choose a socket type */
-    if (strcmp(transport, "udp") == 0)
-        type = SOCK_DGRAM; //
-    else
-        type = SOCK_STREAM; //
-
-    /* Allocate a socket */
-    s = socket(PF_INET, type, 0);
-    if (s < 0)
+    sockfd = socket(PF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0){
         printf("Can't create socket : %s\n", strerror(errno));
+    }
 
-    /* Bind the socket */
-    if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) < 0)
-        printf("Can't bind to port %s : %s\n", argv[1], strerror(errno));
+    memset(&addr_cln, '0', sLen);
 
-    /* Set the maximum number of waiting connection */
-    if (type == SOCK_STREAM && listen(s, 10) < 0)
-        printf("Can't listen on port %s : %s\n", argv[1], strerror(errno));
+    addr_cln.sin_family = AF_INET;
+    addr_cln.sin_addr.s_addr = INADDR_ANY;
+    addr_cln.sin_port = htons((unsigned short)atoi(argv[1]));
 
-    return s;
-
-
+    bind(sockfd, (struct sockaddr *)&addr_cln, sizeof(addr_cln));
+    listen(sockfd, 10);
 
     signal(SIGCHLD, handler);
 
