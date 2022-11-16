@@ -1,10 +1,10 @@
 #!/bin/bash
 
 SESSION="session"
-PORT=1235
+PORT=4444
 
 make clean
-make
+make all
 
 tmux has-session -t $SESSION 2>/dev/null
 
