@@ -5,8 +5,16 @@
  ******************************************************************************
  */
 
-# include <stdio.h>
+#include <linux/kernel.h>
+#include <linux/fs.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
+int f, total_num = 0;
+char data[17] = {};
 
 typedef struct n_case{
     // number of mild case in the area
@@ -14,6 +22,19 @@ typedef struct n_case{
     // number of severe case in the area
     int severe;
 } n_case;
+
+static char seg_display[10][8] = {
+    {'1', '1', '1', '1', '1', '1', '0', '0'}, // 0
+    {'0', '1', '1', '0', '0', '0', '0', '0'}, // 1
+    {'1', '1', '0', '1', '1', '0', '1', '0'}, // 2
+    {'1', '1', '1', '1', '0', '0', '1', '0'}, // 3
+    {'0', '1', '1', '0', '0', '1', '1', '0'}, // 4
+    {'1', '0', '1', '1', '0', '1', '1', '0'}, // 5
+    {'1', '0', '1', '1', '1', '1', '1', '0'}, // 6
+    {'1', '1', '1', '0', '0', '0', '0', '0'}, // 7
+    {'1', '1', '1', '1', '1', '1', '1', '0'}, // 8
+    {'1', '1', '1', '0', '0', '1', '1', '0'}  // 9
+};
 
 /* state 1 (menu) */
 void menu_page(int *state)
@@ -68,6 +89,45 @@ void query_page(int *state, n_case *area)
             printf("\n==========================\n");
             printf("Mild : %d\n", area[input_n].mild);
             printf("Severe : %d\n", area[input_n].severe);
+
+            /* display number of cases in 7-seg */
+            if((area[input_n].mild + area[input_n].severe) >= 10){
+                for(i = 0; i < 8; i++){
+                    data[9 + i] = seg_display[(int)((area[input_n].mild + area[input_n].severe) / 10)][i];
+                }
+                write(f, &data, 17);
+                usleep(500000);
+                for(i = 0; i < 8; i++){
+                    data[9 + i] = seg_display[(int)((area[input_n].mild + area[input_n].severe) % 10)][i];
+                }
+                write(f, &data, 17);
+            }
+            else{
+                for(i = 0; i < 8; i++){
+                    data[9 + i] = seg_display[(area[input_n].mild + area[input_n].severe)][i];
+                }
+                write(f, &data, 17);
+            }
+
+            /* blink LED */
+            data[input_n] = '0';
+            write(f, &data, 17);
+            usleep(500000);
+            data[input_n] = '1';
+            write(f, &data, 17);
+            usleep(500000);
+            data[input_n] = '0';
+            write(f, &data, 17);
+            usleep(500000);
+            data[input_n] = '1';
+            write(f, &data, 17);
+            usleep(500000);
+            data[input_n] = '0';
+            write(f, &data, 17);
+            usleep(500000);
+            data[input_n] = '1';
+            write(f, &data, 17);
+
             printf("(Press any key to leave this page.) ");
             scanf(" %c", &input_c);
         }
@@ -99,6 +159,7 @@ void report_page(int *state, n_case *area)
     else{
         printf(" > Wrong input @ report page !!!\n");
     }
+    total_num += number;
 
     printf("(Press 'e' to leave this page or 'c' to report another case.) ");
     scanf(" %c", &input_c);
@@ -125,7 +186,45 @@ int main()
         area[i].severe = 0;
     }
 
+    /* initial data */
+    for(i = 0; i < 17; i++){
+        data[i] = '0';
+    }
+
+    if ((f = open("/dev/hw1_driver", O_RDWR)) < 0){
+        perror("/dev/hw1_driver");
+        exit(EXIT_FAILURE);
+    }
+
     while(1){
+        /* display LED */
+        for(i = 0; i < 9; i++){
+            if(area[i].mild + area[i].severe != 0){
+                data[i] = '1';
+            }
+            else{
+                data[i] = '0';
+            }
+        }
+        /* display total cases in 7-seg */
+        if(total_num >= 10){
+            for(i = 0; i < 8; i++){
+                data[9 + i] = seg_display[(int)(total_num / 10)][i];
+            }
+            write(f, &data, 17);
+            usleep(500000);
+            for(i = 0; i < 8; i++){
+                data[9 + i] = seg_display[(int)(total_num % 10)][i];
+            }
+            write(f, &data, 17);
+        }
+        else{
+            for(i = 0; i < 8; i++){
+                data[9 + i] = seg_display[total_num][i];
+            }
+            write(f, &data, 17);
+        }
+
         /* (Default) Show menu page */
         if(state == 0){
             menu_page(&state);
@@ -147,5 +246,11 @@ int main()
     }
 
     /* Clean up and exit program (turn off all LEDs and 7-seg) */
+    for(i = 0; i < 17; i++){
+        data[i] = '0';
+    }
+    write(f, &data, 17);
+    
+    close(f);
     return 0;
 }
