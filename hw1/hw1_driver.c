@@ -55,7 +55,7 @@ static int hw1_driver_release ( struct inode *inode , struct file *fp) {
 }
 
 static ssize_t hw1_driver_write ( struct file *fp , const char *buf , size_t count ,loff_t * fpos ) {
-    int ret, i, j, cases = 0, where;
+    int ret, i;
     
     printk("Call driver write.\n");
     
