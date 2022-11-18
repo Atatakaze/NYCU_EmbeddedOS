@@ -5,6 +5,9 @@
 #include <linux/uaccess.h> //copy_from_user(), copy_to_user()
 #include <linux/gpio.h>     //GPIO
 #include <linux/delay.h>    //mdelay()
+#include <linux/cdev.h>
+#include <linux/device.h>
+#include <linux/err.h>
 
 #define LED1 (21)
 #define LED2 (20)
@@ -27,6 +30,10 @@
 
 /* LED(1-9) + 7-seg */
 char buf_kernel[17];
+
+dev_t dev = 0;
+static struct class *dev_class;
+static struct cdev etx_cdev;
 
 static int __init hw1_driver_init ( void );
 static void __exit hw1_driver_exit ( void );
@@ -127,19 +134,33 @@ static ssize_t hw1_driver_write ( struct file *fp , const char *buf , size_t cou
     return count;
 }
 
-# define MAJOR_NUM 255
-# define DRIVER_NAME "hw1_driver"
 
 static int __init hw1_driver_init ( void ) {
     printk("Call driver init.\n");
 
-    if( register_chrdev ( MAJOR_NUM , DRIVER_NAME , &fops ) < 0) {
-        pr_info(" Can not get major %d\n", MAJOR_NUM );
-        return (-EBUSY);
+    if((alloc_chrdev_region(&dev, 0, 1, "etx_Dev")) < 0){
+        pr_err("Cannot allocate major number\n");
+        goto r_unreg;
+    }
+    pr_info("Major = %d Minor = %d \n", MAJOR(dev), MINOR(dev));
+
+    cdev_init(&etx_cdev, &fops);
+
+    if((cdev_add(&etx_cdev, dev, 1)) < 0){
+        pr_err("Cannot add the device to the system\n");
+        goto r_del;
     }
 
-    printk("My device is started and the major is %d\n", MAJOR_NUM );
-    
+    if(IS_ERR(dev_class = class_create(THIS_MODULE, "etx_class"))){
+        pr_err("Cannot create the struct class\n");
+        goto r_class;
+    }
+
+    if(IS_ERR(device_create(dev_class, NULL, dev, NULL, "etx_device"))){
+        pr_err("Cannot create the device \n");
+        goto r_device;
+    }
+
     gpio_direction_output(LED1, 0);
     gpio_direction_output(LED2, 0);
     gpio_direction_output(LED3, 0);
@@ -160,11 +181,20 @@ static int __init hw1_driver_init ( void ) {
     gpio_direction_output(seg_dp, 0);
 
     return 0;
+
+r_device:
+  device_destroy(dev_class, dev);
+r_class:
+  class_destroy(dev_class);
+r_del:
+  cdev_del(&etx_cdev);
+r_unreg:
+  unregister_chrdev_region(dev, 1);
+
+  return -1;
 }
 
 static void __exit hw1_driver_exit ( void ) {
-    unregister_chrdev ( MAJOR_NUM ,  DRIVER_NAME );
-
     gpio_free(LED1);
     gpio_free(LED2);
     gpio_free(LED3);
@@ -184,6 +214,11 @@ static void __exit hw1_driver_exit ( void ) {
     gpio_free(seg_g);
     gpio_free(seg_dp);
 
+    device_destroy(dev_class, dev);
+    class_destroy(dev_class);
+    cdev_del(&etx_cdev);
+    unregister_chrdev_region(dev, 1);
+
     printk("Call exit.\n");
 }
 
@@ -192,4 +227,3 @@ module_exit ( hw1_driver_exit );
 
 MODULE_LICENSE ("GPL");
 MODULE_AUTHOR("bobo chen (bobo511326.ee10@nycu.edu.tw)");
-MODULE_DESCRIPTION("hw1 driver");

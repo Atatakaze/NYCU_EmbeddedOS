@@ -1,23 +1,19 @@
-obj-m += lab4_driver.o
+obj-m += hw1_driver.o
 
-KDIR = ../
+KDIR = ../../
 
 ARCH_NAME = arm64
 TOOL_CHAIN = aarch64-linux-gnu-
 
-all: lab4_driver.c
+all: hw1_driver.c
 	sudo make ARCH=$(ARCH_NAME) CROSS_COMPILE=$(TOOL_CHAIN) -C $(KDIR) M=$(shell pwd) modules
 
-writer: writer.c
-	$(TOOL_CHAIN)gcc -o writer writer.c
-
-reader: reader.c
-	$(TOOL_CHAIN)gcc -o reader reader.c
+hw1: hw1.c
+	$(TOOL_CHAIN)gcc -o hw1 hw1.c
 
 clean:
 	sudo make ARCH=$(ARCH_NAME) CROSS_COMPILE=$(TOOL_CHAIN) -C $(KDIR) M=$(shell pwd) clean
-	@rm writer
-	@rm reader
+	@rm hw1
 
 
 .PHONY: all clean

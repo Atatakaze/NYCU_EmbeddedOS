@@ -91,41 +91,141 @@ void query_page(int *state, n_case *area)
             printf("Severe : %d\n", area[input_n].severe);
 
             /* display number of cases in 7-seg */
-            if((area[input_n].mild + area[input_n].severe) >= 10){
+            if((area[input_n].mild + area[input_n].severe) >= 100){
                 for(i = 0; i < 8; i++){
-                    data[9 + i] = seg_display[(int)((area[input_n].mild + area[input_n].severe) / 10)][i];
+                    data[9 + i] = seg_display[(int)((area[input_n].mild + area[input_n].severe) / 100)][i];
                 }
-                write(f, &data, 17);
+		/*
+		printf("data: ");
+		for(i = 0; i < 17; i ++){
+		    printf("%c ", data[i]);
+		}
+		printf("\n");
+		*/
+		write(f, &data, 17);
+                usleep(500000);
+		for(i = 0; i < 8; i++){
+                    data[9 + i] = seg_display[(int)(((area[input_n].mild + area[input_n].severe) / 10) % 10)][i];
+                }
+		/*
+		printf("data: ");
+		for(i = 0; i < 17; i ++){
+		    printf("%c ", data[i]);
+		}
+		printf("\n");
+		*/
+		write(f, &data, 17);
                 usleep(500000);
                 for(i = 0; i < 8; i++){
                     data[9 + i] = seg_display[(int)((area[input_n].mild + area[input_n].severe) % 10)][i];
                 }
+		/*
+		printf("data: ");
+		for(i = 0; i < 17; i ++){
+		    printf("%c ", data[i]);
+		}
+		printf("\n");
+		*/
+                write(f, &data, 17);
+            }
+	    else if((area[input_n].mild + area[input_n].severe) >= 10){
+                for(i = 0; i < 8; i++){
+                    data[9 + i] = seg_display[(int)((area[input_n].mild + area[input_n].severe) / 10)][i];
+                }
+		/*
+		printf("data: ");
+		for(i = 0; i < 17; i ++){
+		    printf("%c ", data[i]);
+		}
+		printf("\n");
+		*/
+		write(f, &data, 17);
+                usleep(500000);
+                for(i = 0; i < 8; i++){
+                    data[9 + i] = seg_display[(int)((area[input_n].mild + area[input_n].severe) % 10)][i];
+                }
+		/*
+		printf("data: ");
+		for(i = 0; i < 17; i ++){
+		    printf("%c ", data[i]);
+		}
+		printf("\n");
+		*/
                 write(f, &data, 17);
             }
             else{
                 for(i = 0; i < 8; i++){
                     data[9 + i] = seg_display[(area[input_n].mild + area[input_n].severe)][i];
                 }
-                write(f, &data, 17);
+		/*
+		printf("data: ");
+		for(i = 0; i < 17; i ++){
+		    printf("%c ", data[i]);
+		}
+		printf("\n");
+		*/
+		write(f, &data, 17);
             }
 
             /* blink LED */
             data[input_n] = '0';
+	    /*
+	    printf("data: ");
+	    for(i = 0; i < 17; i ++){
+		printf("%c ", data[i]);
+	    }
+	    printf("\n");
+	    */
             write(f, &data, 17);
             usleep(500000);
             data[input_n] = '1';
+	    /*
+	    printf("data: ");
+	    for(i = 0; i < 17; i ++){
+		printf("%c ", data[i]);
+	    }
+	    printf("\n");
+	    */
             write(f, &data, 17);
             usleep(500000);
             data[input_n] = '0';
+	    /*
+	    printf("data: ");
+	    for(i = 0; i < 17; i ++){
+		printf("%c ", data[i]);
+	    }
+	    printf("\n");
+	    */
             write(f, &data, 17);
             usleep(500000);
             data[input_n] = '1';
+	    /*
+	    printf("data: ");
+	    for(i = 0; i < 17; i ++){
+		printf("%c ", data[i]);
+	    }
+	    printf("\n");
+	    */
             write(f, &data, 17);
             usleep(500000);
             data[input_n] = '0';
+	    /*
+	    printf("data: ");
+	    for(i = 0; i < 17; i ++){
+		printf("%c ", data[i]);
+	    }
+	    printf("\n");
+	    */
             write(f, &data, 17);
             usleep(500000);
             data[input_n] = '1';
+	    /*
+	    printf("data: ");
+	    for(i = 0; i < 17; i ++){
+		printf("%c ", data[i]);
+	    }
+	    printf("\n");
+	    */
             write(f, &data, 17);
 
             printf("(Press any key to leave this page.) ");
@@ -139,7 +239,8 @@ void report_page(int *state, n_case *area)
 {
     int input_n, number;
     char input_c;
-    
+    unsigned int i;
+
     printf("\n==========================\n");
     printf("Area (0~8) : ");
     scanf(" %d", &input_n);
@@ -161,6 +262,86 @@ void report_page(int *state, n_case *area)
     }
     total_num += number;
 
+    /* turn on LED in area[input_n] */
+    data[input_n] = '1';
+    /* display total cases in 7-seg */
+    if(total_num >= 100){
+        for(i = 0; i < 8; i++){
+            data[9 + i] = seg_display[(int)(total_num / 100)][i];
+        }
+	/*
+	printf("data: ");
+	for(i = 0; i < 17; i ++){
+	    printf("%c ", data[i]);
+	}
+	printf("\n");
+	*/
+        write(f, &data, 17);
+        usleep(500000);
+	for(i = 0; i < 8; i++){
+            data[9 + i] = seg_display[(int)((total_num / 10) % 10)][i];
+        }
+	/*
+	printf("data: ");
+	for(i = 0; i < 17; i ++){
+	    printf("%c ", data[i]);
+	}
+	printf("\n");
+	*/
+        write(f, &data, 17);
+        usleep(500000);
+        for(i = 0; i < 8; i++){
+            data[9 + i] = seg_display[(int)(total_num % 10)][i];
+        }
+	/*
+	printf("data: ");
+	for(i = 0; i < 17; i ++){
+	    printf("%c ", data[i]);
+	}
+	printf("\n");
+	*/
+        write(f, &data, 17);
+    }
+    else if(total_num >= 10){
+        for(i = 0; i < 8; i++){
+            data[9 + i] = seg_display[(int)(total_num / 10)][i];
+        }
+	/*
+	printf("data: ");
+	for(i = 0; i < 17; i ++){
+	    printf("%c ", data[i]);
+	}
+	printf("\n");
+	*/
+        write(f, &data, 17);
+        usleep(500000);
+        for(i = 0; i < 8; i++){
+            data[9 + i] = seg_display[(int)(total_num % 10)][i];
+        }
+	/*
+	printf("data: ");
+	for(i = 0; i < 17; i ++){
+	    printf("%c ", data[i]);
+	}
+	printf("\n");
+	*/
+        write(f, &data, 17);
+    }
+    else{
+        for(i = 0; i < 8; i++){
+            data[9 + i] = seg_display[total_num][i];
+        }
+	/*
+	printf("data: ");
+	for(i = 0; i < 17; i ++){
+	    printf("%c ", data[i]);
+	}
+	printf("\n");
+	*/
+        write(f, &data, 17);
+    }
+
+
     printf("(Press 'e' to leave this page or 'c' to report another case.) ");
     scanf(" %c", &input_c);
     if(input_c == 'e'){
@@ -175,7 +356,7 @@ int main()
      * 1: Show the number of confirmed cases in each area
      * 2: Report new cases
      * 3: Exit
-     */ 
+     */
     int state = 0;
 
     // 9 area
@@ -191,8 +372,8 @@ int main()
         data[i] = '0';
     }
 
-    if ((f = open("/dev/hw1_driver", O_RDWR)) < 0){
-        perror("/dev/hw1_driver");
+    if ((f = open("/dev/etx_device", O_RDWR)) < 0){
+        perror("/dev/etx_device");
         exit(EXIT_FAILURE);
     }
 
@@ -207,21 +388,79 @@ int main()
             }
         }
         /* display total cases in 7-seg */
-        if(total_num >= 10){
+        if(total_num >= 100){
             for(i = 0; i < 8; i++){
-                data[9 + i] = seg_display[(int)(total_num / 10)][i];
+                data[9 + i] = seg_display[(int)(total_num / 100)][i];
             }
+	    /*
+	    printf("data: ");
+	    for(i = 0; i < 17; i ++){
+		printf("%c ", data[i]);
+	    }
+	    printf("\n");
+	    */
+            write(f, &data, 17);
+            usleep(500000);
+	    for(i = 0; i < 8; i++){
+                data[9 + i] = seg_display[(int)((total_num / 10) % 10)][i];
+            }
+	    /*
+	    printf("data: ");
+	    for(i = 0; i < 17; i ++){
+		printf("%c ", data[i]);
+	    }
+	    printf("\n");
+	    */
             write(f, &data, 17);
             usleep(500000);
             for(i = 0; i < 8; i++){
                 data[9 + i] = seg_display[(int)(total_num % 10)][i];
             }
+	    /*
+	    printf("data: ");
+	    for(i = 0; i < 17; i ++){
+		printf("%c ", data[i]);
+	    }
+	    printf("\n");
+	    */
+            write(f, &data, 17);
+        }
+	else if(total_num >= 10){
+            for(i = 0; i < 8; i++){
+                data[9 + i] = seg_display[(int)(total_num / 10)][i];
+            }
+	    /*
+	    printf("data: ");
+	    for(i = 0; i < 17; i ++){
+		printf("%c ", data[i]);
+	    }
+	    printf("\n");
+	    */
+            write(f, &data, 17);
+            usleep(500000);
+            for(i = 0; i < 8; i++){
+                data[9 + i] = seg_display[(int)(total_num % 10)][i];
+            }
+	    /*
+	    printf("data: ");
+	    for(i = 0; i < 17; i ++){
+		printf("%c ", data[i]);
+	    }
+	    printf("\n");
+	    */
             write(f, &data, 17);
         }
         else{
             for(i = 0; i < 8; i++){
                 data[9 + i] = seg_display[total_num][i];
             }
+	    /*
+	    printf("data: ");
+	    for(i = 0; i < 17; i ++){
+		printf("%c ", data[i]);
+	    }
+	    printf("\n");
+	    */
             write(f, &data, 17);
         }
 
@@ -249,8 +488,15 @@ int main()
     for(i = 0; i < 17; i++){
         data[i] = '0';
     }
+    /*
+    printf("data: ");
+    for(i = 0; i < 17; i ++){
+	printf("%c ", data[i]);
+    }
+    printf("\n");
+    */
     write(f, &data, 17);
-    
+
     close(f);
     return 0;
 }
