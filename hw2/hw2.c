@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
 #include "socket_utils.h"
 
 #define BUFSIZE 1024
@@ -48,11 +47,21 @@ int main(int argc, char *argv[])
         if((n = read(connfd, receive_buf, BUFSIZE)) == -1){
             perror("Error: read()\n");
         }
-        printf(" > [command received](server): %s\n\n", receive_buf);
+        printf(" > [command received](server): %s\n", receive_buf);
 
         /* command: list (return categories) */
         if(strcmp(receive_buf, "list") == 0){
             n = sprintf(transmit_buf, "1. Confirmed case\n2. Reporting system\n3. Exit\n");
+            if((n = write(connfd, transmit_buf, n)) == -1){
+                perror("Error: write()\n");
+            }
+        }
+        /* command: Confirmed case (return confirmed cases in each area) */
+        if(strcmp(receive_buf, "Confirmed case") == 0){
+            n = sprintf(transmit_buf, "0 : %d\n1 : %d\n2 : %d\n3 : %d\n4 : %d\n5 : %d\n6 : %d\n7 : %d\n8 : %d\n", 
+                        (area[0].mild + area[0].severe), (area[1].mild + area[1].severe), (area[2].mild + area[2].severe)
+                        (area[3].mild + area[3].severe), (area[4].mild + area[4].severe), (area[5].mild + area[5].severe), 
+                        (area[6].mild + area[6].severe), (area[7].mild + area[7].severe), (area[8].mild + area[8].severe));
             if((n = write(connfd, transmit_buf, n)) == -1){
                 perror("Error: write()\n");
             }
