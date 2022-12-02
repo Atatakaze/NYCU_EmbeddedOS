@@ -8,7 +8,7 @@
 
 int main(int argc, char **argv)
 {
-    int conn_fd, n;
+    int connfd, n;
     char buf[BUFSIZE];
 
     if(argc != 4){
@@ -16,61 +16,21 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    conn_fd = createClientSock(argv[1], atoi(argv[2]), TRANSPORT_TYPE_TCP);
+    connfd = createClientSock(argv[1], atoi(argv[2]), TRANSPORT_TYPE_TCP);
 
     if((n = write(connfd, argv[3], strlen(argv[3]))) == -1){
-        errexit("Error: write()\n");
+        perror("Error: write()\n");
     }
-    
+    printf("<-- Send to server. (client) -->\n%s\n\n", argv[3]);
+
     memset(buf, 0, BUFSIZE);
-    
+
     if((n = read(connfd, buf, BUFSIZE)) == -1){
-        errexit("Error: read()\n");
-    } 
-    
-    printf("%s\n", buf);
-    
-    close(connfd);
-    
-    return 0;
-} 
-
-/*
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
-#include<unistd.h>
-
-#include "socket_utils.h"
-
-#define BUFSIZE 1024
-
-int main(int argc, char *argv[])
-{
-    int connfd;
-    int n;
-    char buf[BUFSIZE];
-    
-    if(argc != 4){
-        errexit("Usage: %s host_address host_port host_message\n", argv[0]);
+        perror("Error: read()\n");
     }
-    
-    connfd = connectsock(argv[1],argv[2],"tcp");
-    
-    if((n = write(connfd, argv[3],strlen(argv[3]))) == -1){
-        errexit("Error: write()\n");
-    }
-    
-    memset(buf, 0, BUFSIZE);
-    
-    if((n = read(connfd, buf, BUFSIZE)) == -1){
-        errexit("Error: read()\n");
-    } 
-    
-    printf("%s\n", buf);
-    
+    printf("<-- Receive from server. (client) -->\n%s\n\n", buf);
+
     close(connfd);
-    
+
     return 0;
 }
-*/

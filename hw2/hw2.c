@@ -20,27 +20,26 @@ int main(int argc, char *argv[])
     char transmit_buf[BUFSIZE], receive_buf[BUFSIZE];
     AREA area[9];
 
-    if(argc!=2){
+    if(argc != 2){
         printf("Usage: %s port\n", argv[0]);
         exit(-1);
     }
 
-    // initialization of infomation of 8 area
+    /* initialization of infomation of 8 area */
     for(i = 0; i < 9; i++){
-        area[i]->mild = 0;
-        area[i]->severe = 0;
+        area[i].mild = 0;
+        area[i].severe = 0;
     }
     
     sockfd = createServerSock(atoi(argv[1]), TRANSPORT_TYPE_TCP);
     
-    if (sockfd < 0)
-    {
+    if (sockfd < 0){
         perror("Error create socket\n");
         exit(-1);
     }
 
-    while(1)
-    {
+    while(1){
+        memset(receive_buf, 0, BUFSIZE);
         connfd = accept(sockfd, (struct sockaddr *)&addr_cln, &sLen);
         if(connfd == -1){
             perror("Error: accept()\n");
@@ -49,17 +48,17 @@ int main(int argc, char *argv[])
         if((n = read(connfd, receive_buf, BUFSIZE)) == -1){
             perror("Error: read()\n");
         }
-        
-        // command: list (return categories)
-        if(strcmp(receive_buf, "list") == 1){
-            printf(" > [command received (server)]: %s\n", receive_buf);
+        printf(" > [command received](server): %s\n\n", receive_buf);
+
+        /* command: list (return categories) */
+        if(strcmp(receive_buf, "list") == 0){
             n = sprintf(transmit_buf, "1. Confirmed case\n2. Reporting system\n3. Exit\n");
             if((n = write(connfd, transmit_buf, n)) == -1){
                 perror("Error: write()\n");
             }
         }
 
-        close(connfd);    
+        close(connfd);
     }
     
    close(sockfd);

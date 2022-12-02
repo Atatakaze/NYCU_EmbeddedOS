@@ -1,5 +1,5 @@
-#ifndef SOCKET_UTILS_H
-#define SOCKET_UTILS_H
+#ifndef SOCKOP_H
+#define SOCKOP_H
 
 #include<arpa/inet.h>
 #include<errno.h>
