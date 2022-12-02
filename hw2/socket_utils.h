@@ -1,20 +1,20 @@
-#ifndef _SOCKOP_H_
-#define _SOCKOP_H_
+#ifndef SOCKET_UTILS_H
+#define SOCKET_UTILS_H
 
-#include<arpa/inet.h>
-#include<errno.h>
-#include<netdb.h>
-#include<netinet/in.h>
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
-#include<sys/socket.h>
-#include<sys/types.h>
-#include<sys/wait.h>
+#include <fcntl.h>  // open()
+#include <unistd.h>
+#include <string.h>
+#include <sys/socket.h> // socket(), connect()
+#include <netinet/in.h> // struct sockaddr_in
+#include <arpa/inet.h> // inet_addr()
+#include <netdb.h>
+#include <stdio.h>
+#include <errno.h>
 
-#define errexit(format,arg...) exit(printf(format,##arg))
+#define TRANSPORT_TYPE_TCP 0
+#define TRANSPORT_TYPE_UDP 1
 
-int passivesock(const char *service, const char *transport, int qlen);
-int connectsock(const char *host, const char *service, const char *transport);
+int createServerSock(int port, int type);
+int createClientSock(const char* host, int port, int type);
 
 #endif

@@ -1,9 +1,9 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
-#include<unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-#include "sockop.h"
+#include "socket_utils.h"
 
 #define BUFSIZE 1024
 
@@ -17,11 +17,12 @@ int main(int argc, char *argv[])
     int sockfd, connfd, i, n;
     struct sockaddr_in addr_cln;
     socklen_t sLen = sizeof(addr_cln);
-    char snd[BUFSIZE], rcv[BUFSIZE];
+    char transmit_buf[BUFSIZE], receive_buf[BUFSIZE];
     AREA* area[9];
 
     if(argc!=2){
         errexit("Usage: %s port\n", argv[0]);
+        exit(-1);
     }
 
     // initialization of infomation of 8 area
@@ -29,9 +30,15 @@ int main(int argc, char *argv[])
         area[i].mild = 0;
         area[i].servere = 0;
     }
-
-    sockfd = passivesock(argv[1], "tcp", 10);
     
+    sockfd = createServerSock(atoi(argv[1]), TRANSPORT_TYPE_TCP);
+    
+    if (sockfd < 0)
+    {
+        perror("Error create socket\n");
+        exit(-1);
+    }
+
     while(1)
     {
         connfd = accept(sockfd, (struct sockaddr *)&addr_cln, &sLen);
@@ -39,15 +46,15 @@ int main(int argc, char *argv[])
             errexit("Error: accept()\n");
         }
 
-        if((n = read(connfd, rcv, BUFSIZE)) == -1){
+        if((n = read(connfd, receive_buf, BUFSIZE)) == -1){
             errexit("Error: read()\n");
         }
         
         // command: list (return categories)
-        if(strcmp(rcv, "list") == 1){
-            printf(" > [command received]: list\n");
-            n = sprintf(snd, "1. Confirmed case\n2. Reporting system\n3. Exit\n");
-            if((n = write(connfd, snd, n)) == -1){
+        if(strcmp(receive_buf, "list") == 1){
+            printf(" > [command received (server)]: %s\n", receive_buf);
+            n = sprintf(transmit_buf, "1. Confirmed case\n2. Reporting system\n3. Exit\n");
+            if((n = write(connfd, transmit_buf, n)) == -1){
                 errexit("Error: write()\n");
             }
         }
