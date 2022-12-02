@@ -18,17 +18,17 @@ int main(int argc, char *argv[])
     struct sockaddr_in addr_cln;
     socklen_t sLen = sizeof(addr_cln);
     char transmit_buf[BUFSIZE], receive_buf[BUFSIZE];
-    AREA* area[9];
+    AREA area[9];
 
     if(argc!=2){
-        errexit("Usage: %s port\n", argv[0]);
+        printf("Usage: %s port\n", argv[0]);
         exit(-1);
     }
 
     // initialization of infomation of 8 area
     for(i = 0; i < 9; i++){
-        area[i].mild = 0;
-        area[i].servere = 0;
+        area[i]->mild = 0;
+        area[i]->severe = 0;
     }
     
     sockfd = createServerSock(atoi(argv[1]), TRANSPORT_TYPE_TCP);
@@ -43,11 +43,11 @@ int main(int argc, char *argv[])
     {
         connfd = accept(sockfd, (struct sockaddr *)&addr_cln, &sLen);
         if(connfd == -1){
-            errexit("Error: accept()\n");
+            perror("Error: accept()\n");
         }
 
         if((n = read(connfd, receive_buf, BUFSIZE)) == -1){
-            errexit("Error: read()\n");
+            perror("Error: read()\n");
         }
         
         // command: list (return categories)
@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
             printf(" > [command received (server)]: %s\n", receive_buf);
             n = sprintf(transmit_buf, "1. Confirmed case\n2. Reporting system\n3. Exit\n");
             if((n = write(connfd, transmit_buf, n)) == -1){
-                errexit("Error: write()\n");
+                perror("Error: write()\n");
             }
         }
 
