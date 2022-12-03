@@ -13,12 +13,12 @@ typedef struct AREA{
 
 int main(int argc, char *argv[])
 {
-    int sockfd, connfd, i, n, substr_count = 0;
+    int sockfd, connfd, i, n, which_area, substr_count = 0;
     struct sockaddr_in addr_cln;
     socklen_t sLen = sizeof(addr_cln);
     char transmit_buf[BUFSIZE], receive_buf[BUFSIZE];
     AREA area[9];
-    char* s;                        // use to seperate each command by "|"
+    char* s;                        // use to seperate each command by '|' and ' '
     char* substr[10];               // store sub string
 
     if(argc != 2){
@@ -51,16 +51,16 @@ int main(int argc, char *argv[])
         }
         printf(" > [command received](server): %s\n", receive_buf);
 
-        /* seperate command by the '|' */
+        /* seperate command by the '|' and ' ' */
         substr_count = 0;
-        s = strtok(receive_buf, "|")
+        s = strtok(receive_buf, " |");
         while(s != NULL){
             substr[substr_count++] = s;
             s = strtok(NULL, "|");
         }
-        printf(" > after seperated by '|':\n");
+        printf(" > after seperated by ' |':\n");
         for(i = 0; i < substr_count; i++){
-            printf("%d: [%s]\n", i, substr[i]);
+            printf("substr[%d]: '%s'\n", i, substr[i]);
         }
 
         /* command: list (return categories) */
@@ -70,12 +70,21 @@ int main(int argc, char *argv[])
                 perror("Error: write()\n");
             }
         }
-        /* command: Confirmed case (return confirmed cases in each area) */
-        if((strcmp(substr[0], "Confirmed case") == 0) || (strcmp(substr[0], "Confirmed case ") == 0)){
-            n = sprintf(transmit_buf, "0 : %d\n1 : %d\n2 : %d\n3 : %d\n4 : %d\n5 : %d\n6 : %d\n7 : %d\n8 : %d\n", 
-                        (area[0].mild + area[0].severe), (area[1].mild + area[1].severe), (area[2].mild + area[2].severe),
-                        (area[3].mild + area[3].severe), (area[4].mild + area[4].severe), (area[5].mild + area[5].severe), 
-                        (area[6].mild + area[6].severe), (area[7].mild + area[7].severe), (area[8].mild + area[8].severe));
+        /* command: Confirmed case (return infomation of confirmed cases) */
+        if(strcmp(substr[0], "Confirmed") == 0){
+            /* command: Confirmed case */
+            if(substr_count == 2){
+                n = sprintf(transmit_buf, "0 : %d\n1 : %d\n2 : %d\n3 : %d\n4 : %d\n5 : %d\n6 : %d\n7 : %d\n8 : %d\n", 
+                            (area[0].mild + area[0].severe), (area[1].mild + area[1].severe), (area[2].mild + area[2].severe),
+                            (area[3].mild + area[3].severe), (area[4].mild + area[4].severe), (area[5].mild + area[5].severe), 
+                            (area[6].mild + area[6].severe), (area[7].mild + area[7].severe), (area[8].mild + area[8].severe));
+            }
+            /* command: Confirmed case | Area x */
+            else{
+                which_area = atoi(substr[3]);
+                n = sprintf(transmit_buf, "Area %d - Mild : %d | Severe : %d\n");
+            }
+
             if((n = write(connfd, transmit_buf, n)) == -1){
                 perror("Error: write()\n");
             }

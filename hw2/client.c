@@ -11,7 +11,7 @@ int main(int argc, char **argv)
     int connfd, n, area;
     char transmit_buf[BUFSIZE], receive_buf[BUFSIZE];
 
-    if(argc != 4 || argc != 5){
+    if(argc != 4 && argc != 5){
         printf("Usage1: %s <host> <port> host_message\n", argv[0]);
         printf("Usage2: %s <host> <port> host_message host_message2\n", argv[0]);
         exit(-1);
@@ -30,7 +30,7 @@ int main(int argc, char **argv)
     /* check the number of confirmed case in specific area */
     else if(strcmp(argv[3], "command3") == 0){
         area = atoi(argv[4]);
-        sprintf(transmit_buf, "Confirmed case | Area %d");
+        sprintf(transmit_buf, "Confirmed case | Area %d", area);
     }
     else{
         sprintf(transmit_buf, "No this command");
