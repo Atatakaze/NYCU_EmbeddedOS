@@ -115,6 +115,10 @@ int main(int argc, char *argv[])
                 perror("Error: write()\n");
             }
         }
+        /* command: Exit (exit system) */
+        if(strcmp(substr[0], "Exit") == 0){
+            break;
+        }
 
         close(connfd);
     }
