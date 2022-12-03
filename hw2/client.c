@@ -34,6 +34,10 @@ int main(int argc, char **argv)
     else if(strcmp(argv[3], "command4") == 0){
         sprintf(transmit_buf, "Reporting system | Area %s | %s %s", argv[4], argv[5], argv[6]);
     }
+    /* command: Reporting system | Area x | Mild/Severe x | Area x | Mild/Severe x */
+    else if(strcmp(argv[3], "command5") == 0){
+        sprintf(transmit_buf, "Reporting system | Area %s | %s %s | Area %s | %s %s", argv[4], argv[5], argv[6], argv[7], argv[8], argv[9]);
+    }
     /* command: Exit */
     else if(strcmp(argv[3], "command6") == 0){
         sprintf(transmit_buf, "Exit");
