@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
         s = strtok(receive_buf, " |");
         while(s != NULL){
             substr[substr_count++] = s;
-            s = strtok(NULL, "|");
+            s = strtok(NULL, " |");
         }
         printf(" > after seperated by ' |':\n");
         for(i = 0; i < substr_count; i++){
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
             /* command: Confirmed case | Area x */
             else{
                 which_area = atoi(substr[3]);
-                n = sprintf(transmit_buf, "Area %d - Mild : %d | Severe : %d\n");
+                n = sprintf(transmit_buf, "Area %d - Mild : %d | Severe : %d\n", which_area, area[which_area].mild, area[which_area].severe);
             }
 
             if((n = write(connfd, transmit_buf, n)) == -1){
