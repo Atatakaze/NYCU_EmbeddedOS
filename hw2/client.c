@@ -8,12 +8,11 @@
 
 int main(int argc, char **argv)
 {
-    int connfd, n, area;
+    int connfd, n;
     char transmit_buf[BUFSIZE], receive_buf[BUFSIZE];
 
-    if(argc != 4 && argc != 5){
-        printf("Usage1: %s <host> <port> host_message\n", argv[0]);
-        printf("Usage2: %s <host> <port> host_message host_message2\n", argv[0]);
+    if(argc < 4){
+        printf("Usage1: %s <host> <port> host_message ...\n", argv[0]);
         exit(-1);
     }
 
@@ -29,8 +28,11 @@ int main(int argc, char **argv)
     }
     /* check the number of confirmed case in specific area */
     else if(strcmp(argv[3], "command3") == 0){
-        area = atoi(argv[4]);
-        sprintf(transmit_buf, "Confirmed case | Area %d", area);
+        sprintf(transmit_buf, "Confirmed case | Area %s", argv[4]);
+    }
+    /* report confirmed case in specific area */
+    else if(strcmp(argv[3], "command4") == 0){
+        sprintf(transmit_buf, "Reporting system | Area %s | %s %d", argv[4], argv[5], argv[6]);
     }
     else{
         sprintf(transmit_buf, "No this command");
@@ -47,6 +49,14 @@ int main(int argc, char **argv)
         perror("Error: read()\n");
     }
     printf("<======= Receive from server. (client) ======>\n%s\n\n", receive_buf);
+
+    if(strcmp(argv[3], "command4") == 0){
+        memset(receive_buf, 0, BUFSIZE);
+        if((n = read(connfd, receive_buf, BUFSIZE)) == -1){
+            perror("Error: read()\n");
+        }
+        printf("<======= Receive from server. (client) ======>\n%s\n\n", receive_buf);
+    }
 
     close(connfd);
 

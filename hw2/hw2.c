@@ -13,7 +13,7 @@ typedef struct AREA{
 
 int main(int argc, char *argv[])
 {
-    int sockfd, connfd, i, n, which_area, substr_count = 0;
+    int sockfd, connfd, i, n, which_area, n_case, substr_count = 0;
     struct sockaddr_in addr_cln;
     socklen_t sLen = sizeof(addr_cln);
     char transmit_buf[BUFSIZE], receive_buf[BUFSIZE];
@@ -84,6 +84,32 @@ int main(int argc, char *argv[])
                 which_area = atoi(substr[3]);
                 n = sprintf(transmit_buf, "Area %d - Mild : %d | Severe : %d\n", which_area, area[which_area].mild, area[which_area].severe);
             }
+
+            if((n = write(connfd, transmit_buf, n)) == -1){
+                perror("Error: write()\n");
+            }
+        }
+        /* command: Reporting system */
+        if(strcmp(substr[0], "Reporting") == 0){
+            /* command: Reporting sytem | Area x | Mild/Severe x */
+            if(substr_count == 6){
+                n = sprintf(transmit_buf, "Please wait a few seconds...\n");
+                if((n = write(connfd, transmit_buf, n)) == -1){
+                    perror("Error: write()\n");
+                }
+
+                which_area = atoi(substr[3]);
+                n_case = atoi(substr[5]);
+                if(strcmp(substr[4], "Mild") == 0){
+                    area[which_area].mild = n_case;
+                }
+                else{
+                    area[which_area].severe = n_case;
+                }
+                sleep(which_area);
+                n = sprintf(transmit_buf, "Area %d | %s %d\n", which_area, substr[4], n_case);
+            }
+
 
             if((n = write(connfd, transmit_buf, n)) == -1){
                 perror("Error: write()\n");
