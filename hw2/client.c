@@ -18,21 +18,25 @@ int main(int argc, char **argv)
 
     connfd = createClientSock(argv[1], atoi(argv[2]), TRANSPORT_TYPE_TCP);
 
-    /* list all available commads */
+    /* command: list */
     if(strcmp(argv[3], "command1") == 0){
         sprintf(transmit_buf, "list");
     }
-    /* check the number of confirmed case in every area */
+    /* command: Confirmed case */
     else if(strcmp(argv[3], "command2") == 0){
         sprintf(transmit_buf, "Confirmed case");
     }
-    /* check the number of confirmed case in specific area */
+    /* command: Confirmed case | Area x */
     else if(strcmp(argv[3], "command3") == 0){
         sprintf(transmit_buf, "Confirmed case | Area %s", argv[4]);
     }
-    /* report confirmed case in specific area */
+    /* command: Reporting system | Area x | Mild/Severe x */
     else if(strcmp(argv[3], "command4") == 0){
-        sprintf(transmit_buf, "Reporting system | Area %s | %s %d", argv[4], argv[5], argv[6]);
+        sprintf(transmit_buf, "Reporting system | Area %s | %s %s", argv[4], argv[5], argv[6]);
+    }
+    /* command: Exit */
+    else if(strcmp(argv[3], "command6") == 0){
+        sprintf(transmit_buf, "Exit");
     }
     else{
         sprintf(transmit_buf, "No this command");
