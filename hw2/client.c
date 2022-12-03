@@ -9,8 +9,7 @@
 int main(int argc, char **argv)
 {
     int connfd, n;
-    string command = "";
-    char buf[BUFSIZE];
+    char transmit_buf[BUFSIZE], receive_buf[BUFSIZE];
 
     if(argc != 4){
         printf("Usage: %s <host> <port> host_message\n", argv[0]);
@@ -20,27 +19,26 @@ int main(int argc, char **argv)
     connfd = createClientSock(argv[1], atoi(argv[2]), TRANSPORT_TYPE_TCP);
 
     if(strcmp(argv[3], "command1") == 0){
-        command = "list";
+        sprintf(transmit_buf, "list");
     }
     else if(strcmp(argv[3], "command2") == 0){
-        command = "Confirmed case";
+        sprintf(transmit_buf, "Confirmed case");
     }
     else{
-        command = "NoThisCommand";
+        sprintf(transmit_buf, "No this command");
     }
 
-    if((n = write(connfd, command, strlen(command))) == -1){
+    if((n = write(connfd, transmit_buf, strlen(transmit_buf))) == -1){
             perror("Error: write()\n");
     }
 
-    printf("<-- Send to server. (client) -->\n%s\n\n", command);
+    printf("<-- Send to server. (client) -->\n%s\n\n", transmit_buf);
 
-    memset(buf, 0, BUFSIZE);
-
-    if((n = read(connfd, buf, BUFSIZE)) == -1){
+    memset(receive_buf, 0, BUFSIZE);
+    if((n = read(connfd, receive_buf, BUFSIZE)) == -1){
         perror("Error: read()\n");
     }
-    printf("<-- Receive from server. (client) -->\n%s\n\n", buf);
+    printf("<-- Receive from server. (client) -->\n%s\n\n", receive_buf);
 
     close(connfd);
 
