@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
                 n = sprintf(transmit_buf, "Area %s | %s %s\n", substr[3], substr[4], substr[5]);
             }
             /* command: Reporting sytem | Area x | Mild/Severe x | Area x | Mild/Severe x */
-            else if(substr_count == 10){
+            else{
                 n = sprintf(transmit_buf, "Please wait a few seconds...\n");
                 if((n = write(connfd, transmit_buf, n)) == -1){
                     perror("Error: write()\n");

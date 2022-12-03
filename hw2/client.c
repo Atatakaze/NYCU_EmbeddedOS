@@ -58,7 +58,7 @@ int main(int argc, char **argv)
     }
     printf("<======= Receive from server. (client) ======>\n%s\n\n", receive_buf);
 
-    if(strcmp(argv[3], "command4") == 0){
+    if((strcmp(argv[3], "command4") == 0) || (strcmp(argv[3], "command5") == 0)){
         memset(receive_buf, 0, BUFSIZE);
         if((n = read(connfd, receive_buf, BUFSIZE)) == -1){
             perror("Error: read()\n");
