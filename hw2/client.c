@@ -9,6 +9,7 @@
 int main(int argc, char **argv)
 {
     int connfd, n;
+    string command = "";
     char buf[BUFSIZE];
 
     if(argc != 4){
@@ -18,10 +19,21 @@ int main(int argc, char **argv)
 
     connfd = createClientSock(argv[1], atoi(argv[2]), TRANSPORT_TYPE_TCP);
 
-    if((n = write(connfd, argv[3], strlen(argv[3]))) == -1){
-        perror("Error: write()\n");
+    if(strcmp(argv[3], "command1") == 0){
+        command = "list";
     }
-    printf("<-- Send to server. (client) -->\n%s\n\n", argv[3]);
+    else if(strcmp(argv[3], "command2") == 0){
+        command = "Confirmed case";
+    }
+    else{
+        command = "NoThisCommand";
+    }
+
+    if((n = write(connfd, command, strlen(command))) == -1){
+            perror("Error: write()\n");
+    }
+
+    printf("<-- Send to server. (client) -->\n%s\n\n", command);
 
     memset(buf, 0, BUFSIZE);
 
