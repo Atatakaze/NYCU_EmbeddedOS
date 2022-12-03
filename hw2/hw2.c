@@ -13,13 +13,13 @@ typedef struct AREA{
 
 int main(int argc, char *argv[])
 {
-    int sockfd, connfd, i, n, which_area, n_case, substr_count = 0;
+    int sockfd, connfd, i, n, which_area, n_case, n_report, substr_count = 0;
     struct sockaddr_in addr_cln;
     socklen_t sLen = sizeof(addr_cln);
-    char transmit_buf[BUFSIZE], receive_buf[BUFSIZE];
+    char transmit_buf[BUFSIZE], receive_buf[BUFSIZE], buf[BUFSIZE];
     AREA area[9];
     char* s;                        // use to seperate each command by '|' and ' '
-    char* substr[10];               // store sub string
+    char* substr[30];               // store sub string
 
     if(argc != 2){
         printf("Usage: %s port\n", argv[0]);
@@ -43,6 +43,12 @@ int main(int argc, char *argv[])
         connfd = accept(sockfd, (struct sockaddr *)&addr_cln, &sLen);
         if(connfd == -1){
             perror("Error: accept()\n");
+        }
+
+        /* initialization of infomation of 8 area */
+        for(i = 0; i < 9; i++){
+            area[i].mild = 0;
+            area[i].severe = 0;
         }
 
         while(1){
@@ -93,55 +99,97 @@ int main(int argc, char *argv[])
             }
             /* command: Reporting system */
             if(strcmp(substr[0], "Reporting") == 0){
+                // /* command: Reporting sytem | Area x | Mild/Severe x */
+                // if(substr_count == 6){
+                //     n = sprintf(transmit_buf, "Please wait a few seconds...\n");
+                //     if((n = write(connfd, transmit_buf, n)) == -1){
+                //         perror("Error: write()\n");
+                //     }
+
+                //     which_area = atoi(substr[3]);
+                //     n_case = atoi(substr[5]);
+                //     if(strcmp(substr[4], "Mild") == 0){
+                //         area[which_area].mild += n_case;
+                //     }
+                //     else{
+                //         area[which_area].severe += n_case;
+                //     }
+                //     sleep(which_area);
+                //     n = sprintf(transmit_buf, "Area %s | %s %s\n", substr[3], substr[4], substr[5]);
+                // }
+                // /* command: Reporting sytem | Area x | Mild/Severe x | Area x | Mild/Severe x */
+                // else{
+                //     n = sprintf(transmit_buf, "Please wait a few seconds...\n");
+                //     if((n = write(connfd, transmit_buf, n)) == -1){
+                //         perror("Error: write()\n");
+                //     }
+
+                //     which_area = atoi(substr[3]);
+                //     n_case = atoi(substr[5]);
+                //     if(strcmp(substr[4], "Mild") == 0){
+                //         area[which_area].mild += n_case;
+                //     }
+                //     else{
+                //         area[which_area].severe += n_case;
+                //     }
+
+                //     which_area = atoi(substr[7]);
+                //     n_case = atoi(substr[9]);
+                //     if(strcmp(substr[8], "Mild") == 0){
+                //         area[which_area].mild += n_case;
+                //     }
+                //     else{
+                //         area[which_area].severe += n_case;
+                //     }
+
+                //     if(which_area < atoi(substr[5])){
+                //         which_area = atoi(substr[5]);
+                //     }
+                //     sleep(which_area);
+                //     n = sprintf(transmit_buf, "Area %s | %s %s\nArea %s | %s %s\n", substr[3], substr[4], substr[5], substr[7], substr[8], substr[9]);
+                // }
+                
+
+
                 /* command: Reporting sytem | Area x | Mild/Severe x */
-                if(substr_count == 6){
-                    n = sprintf(transmit_buf, "Please wait a few seconds...\n");
-                    if((n = write(connfd, transmit_buf, n)) == -1){
-                        perror("Error: write()\n");
-                    }
-
-                    which_area = atoi(substr[3]);
-                    n_case = atoi(substr[5]);
-                    if(strcmp(substr[4], "Mild") == 0){
-                        area[which_area].mild += n_case;
-                    }
-                    else{
-                        area[which_area].severe += n_case;
-                    }
-                    sleep(which_area);
-                    n = sprintf(transmit_buf, "Area %s | %s %s\n", substr[3], substr[4], substr[5]);
+                n = sprintf(transmit_buf, "Please wait a few seconds...\n");
+                if((n = write(connfd, transmit_buf, n)) == -1){
+                    perror("Error: write()\n");
                 }
-                /* command: Reporting sytem | Area x | Mild/Severe x | Area x | Mild/Severe x */
-                else{
-                    n = sprintf(transmit_buf, "Please wait a few seconds...\n");
-                    if((n = write(connfd, transmit_buf, n)) == -1){
-                        perror("Error: write()\n");
-                    }
 
-                    which_area = atoi(substr[3]);
-                    n_case = atoi(substr[5]);
-                    if(strcmp(substr[4], "Mild") == 0){
+                n_report = ((substr_count - 2) / 4);
+                for(i = 0; i < n_report; i++){
+                    which_area = atoi(substr[(3 + 4 * i)]);
+                    n_case = atoi(substr[(5 + 4 * i)]);
+                    if(strcmp(substr[(4 + 4 * i)], "Mild") == 0){
                         area[which_area].mild += n_case;
                     }
                     else{
                         area[which_area].severe += n_case;
                     }
-
-                    which_area = atoi(substr[7]);
-                    n_case = atoi(substr[9]);
-                    if(strcmp(substr[8], "Mild") == 0){
-                        area[which_area].mild += n_case;
-                    }
-                    else{
-                        area[which_area].severe += n_case;
-                    }
-
-                    if(which_area < atoi(substr[5])){
-                        which_area = atoi(substr[5]);
-                    }
-                    sleep(which_area);
-                    n = sprintf(transmit_buf, "Area %s | %s %s\nArea %s | %s %s\n", substr[3], substr[4], substr[5], substr[7], substr[8], substr[9]);
                 }
+
+                for(i = 0; i < n_report; i++){
+                    if(which_area < atoi(substr[(3 + 4 * i)])){
+                        which_area = atoi(substr[(3 + 4 * i)]);
+                    }
+                }
+                sleep(which_area);
+
+                memset(buf, 0, BUFSIZE);
+                for(i = 0; i < n_report; i++){
+                    strcat(buf, "Area ");
+                    strcat(buf, substr[(3 + 4 * i)]);
+                    strcat(buf, " | ");
+                    strcat(buf, substr[(4 + 4 * i)]);
+                    strcat(buf, " ");
+                    strcat(buf, substr[(5 + 4 * i)]);
+                    strcat(buf, "\n");
+                }
+                
+                n = sprintf(transmit_buf, buf);
+
+
 
                 if((n = write(connfd, transmit_buf, n)) == -1){
                     perror("Error: write()\n");
