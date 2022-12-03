@@ -58,10 +58,11 @@ int main(int argc, char *argv[])
             substr[substr_count++] = s;
             s = strtok(NULL, " |");
         }
-        printf(" > after seperated by ' |':\n");
-        for(i = 0; i < substr_count; i++){
-            printf("substr[%d]: '%s'\n", i, substr[i]);
-        }
+        
+        //printf(" > after seperated by ' |':\n");
+        //for(i = 0; i < substr_count; i++){
+        //   printf("substr[%d]: '%s'\n", i, substr[i]);
+        //}
 
         /* command: list (return categories) */
         if(strcmp(substr[0], "list") == 0){
@@ -101,10 +102,10 @@ int main(int argc, char *argv[])
                 which_area = atoi(substr[3]);
                 n_case = atoi(substr[5]);
                 if(strcmp(substr[4], "Mild") == 0){
-                    area[which_area].mild = n_case;
+                    area[which_area].mild += n_case;
                 }
                 else{
-                    area[which_area].severe = n_case;
+                    area[which_area].severe += n_case;
                 }
                 sleep(which_area);
                 n = sprintf(transmit_buf, "Area %s | %s %s\n", substr[3], substr[4], substr[5]);
@@ -119,19 +120,19 @@ int main(int argc, char *argv[])
                 which_area = atoi(substr[3]);
                 n_case = atoi(substr[5]);
                 if(strcmp(substr[4], "Mild") == 0){
-                    area[which_area].mild = n_case;
+                    area[which_area].mild += n_case;
                 }
                 else{
-                    area[which_area].severe = n_case;
+                    area[which_area].severe += n_case;
                 }
 
                 which_area = atoi(substr[7]);
                 n_case = atoi(substr[9]);
                 if(strcmp(substr[8], "Mild") == 0){
-                    area[which_area].mild = n_case;
+                    area[which_area].mild += n_case;
                 }
                 else{
-                    area[which_area].severe = n_case;
+                    area[which_area].severe += n_case;
                 }
 
                 if(which_area < atoi(substr[5])){
