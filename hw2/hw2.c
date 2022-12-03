@@ -13,11 +13,13 @@ typedef struct AREA{
 
 int main(int argc, char *argv[])
 {
-    int sockfd, connfd, i, n;
+    int sockfd, connfd, i, n, substr_count = 0;
     struct sockaddr_in addr_cln;
     socklen_t sLen = sizeof(addr_cln);
     char transmit_buf[BUFSIZE], receive_buf[BUFSIZE];
     AREA area[9];
+    char* s;                        // use to seperate each command by "|"
+    char* substr[10];               // store sub string
 
     if(argc != 2){
         printf("Usage: %s port\n", argv[0]);
@@ -49,15 +51,27 @@ int main(int argc, char *argv[])
         }
         printf(" > [command received](server): %s\n", receive_buf);
 
+        /* seperate command by the '|' */
+        substr_count = 0;
+        s = strtok(receive_buf, "|")
+        while(s != NULL){
+            substr[substr_count++] = s;
+            s = strtok(NULL, "|");
+        }
+        printf(" > after seperated by '|':\n");
+        for(i = 0; i < substr_count; i++){
+            printf("%d: [%s]\n", i, substr[i]);
+        }
+
         /* command: list (return categories) */
-        if(strcmp(receive_buf, "list") == 0){
+        if(strcmp(substr[0], "list") == 0){
             n = sprintf(transmit_buf, "1. Confirmed case\n2. Reporting system\n3. Exit\n");
             if((n = write(connfd, transmit_buf, n)) == -1){
                 perror("Error: write()\n");
             }
         }
         /* command: Confirmed case (return confirmed cases in each area) */
-        if(strcmp(receive_buf, "Confirmed case") == 0){
+        if((strcmp(substr[0], "Confirmed case") == 0) || (strcmp(substr[0], "Confirmed case ") == 0)){
             n = sprintf(transmit_buf, "0 : %d\n1 : %d\n2 : %d\n3 : %d\n4 : %d\n5 : %d\n6 : %d\n7 : %d\n8 : %d\n", 
                         (area[0].mild + area[0].severe), (area[1].mild + area[1].severe), (area[2].mild + area[2].severe),
                         (area[3].mild + area[3].severe), (area[4].mild + area[4].severe), (area[5].mild + area[5].severe), 
