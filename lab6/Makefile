@@ -1,13 +1,14 @@
-CC=gcc
-CFLAGS=-Wall
-ING_FLAGS=-lpthread
+CXX = gcc
 
-all: server.o client.o socket_utils.o
-	${CC} ${CFLAGS} -c server.c
-	${CC} ${CFLAGS} -c client.c
-	${CC} ${CFLAGS} -c socket_utils.c
-	${CC} client.o socket_utils.o ${CFLAGS} ${ING_FLAGS} -o client
-	${CC} server.o socket_utils.o ${CFLAGS} ${ING_FLAGS} -o server
+all: server client
 
-clean: 
-	${RM} server client server.o client.o socket_utils.o
+server:
+	$(CXX) -o server server.c -lpthread
+
+client:
+	$(CXX) -o client client.c
+
+clean:
+	rm -rf server client
+
+.PHONY: all clean #代表這些任務一定要執行

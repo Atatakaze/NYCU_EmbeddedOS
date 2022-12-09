@@ -1,42 +1,103 @@
+#include <arpa/inet.h> //htons, ntohs
+#include <errno.h>     /* Errors */
+#include <netdb.h>
+#include <netinet/in.h> //struct sockaddr_in
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include "socket_utils.h"
+#include <string.h>
+#include <stdbool.h>
+#include <sys/socket.h> //the functions of socket
+#include <sys/types.h>  /* Primitive System Data Types */
+// #include <sys/wait.h>   //waitpid
 
-int main(int argc, char **argv)
+#include <unistd.h> //sleep()
+// #include <signal.h> //signal
+
+
+#define BUFSIZE 128
+
+
+int connectsock(const char *host, const char *service, const char *transport)
 {
-  int conn_fd, msg_cnt, i;
-  char action = 0;
-  char msg_buf[50];
+    struct hostent *phe;
+    struct servent *pse;
+    struct sockaddr_in sin;
+    int s, type;
 
-  if (argc != 6)
-  {
-    printf("Usage: %s <host> <port> <deposit/withdraw> <amount> <times>\n", argv[0]);
-    exit(-1);
-  }
+    memset(&sin, 0, sizeof(sin));
+    sin.sin_family = AF_INET;
 
-  if (strcmp(argv[3], "deposit") == 0)
-  {
-    action = 'D';
-  }
-  else if (strcmp(argv[3], "withdraw") == 0)
-  {
-    action = 'W';
-  }
-  else
-  {
-    sprintf(msg_buf, "invalid action %s\n", argv[3]);
-    perror(msg_buf);
-    exit(-1);
-  }
-  msg_cnt = sprintf(msg_buf, "%c,%s", action, argv[4]);
+    /* Map service name to port number */
+    if ((pse = getservbyname(service, transport)))
+        sin.sin_port = pse->s_port;
+    else if ((sin.sin_port = htons((unsigned short)atoi(service))) == 0)
+        printf("Can’t get \"%s\" service entry\n", service);
 
-  for (i = 0; i < atoi(argv[5]); i++)
-  {
-    conn_fd = createClientSock(argv[1], atoi(argv[2]), TRANSPORT_TYPE_TCP);
-    write(conn_fd, msg_buf, msg_cnt);
-    close(conn_fd);
-  }
+    if((phe=gethostbyname(host))){
+        memcpy(&sin.sin_addr, phe->h_addr, phe->h_length);
+    }
+    else if((sin.sin_addr.s_addr=inet_addr(host))==INADDR_NONE){
+        printf("Can't get \"%s\" host entry\n", host);
+    }
 
-  return 0;
-} 
+    if(strcmp(transport, "udp")==0){
+        type=SOCK_DGRAM;
+    }
+    else
+    {
+        type=SOCK_STREAM;
+    }
+    
+
+    /* Allocate a socket */
+    s = socket(PF_INET, type, 0);
+    if (s < 0)
+        printf("Can't create socket : %s\n", strerror(errno));
+
+    if(connect(s, (struct sockaddr *)&sin, sizeof(sin))<0){
+        printf("Can't connect to %s.%s: %s\n", host, service, strerror(errno));
+    }
+
+    return s;
+}
+
+int main(int argc , char *argv [])
+{ 
+    int connfd ; /* socket descriptor */ 
+    int n; 
+    char buf [BUFSIZE]; 
+    int t;
+    char send_data[100];
+
+
+    if (argc != 6) 
+        printf("Usage: %s host address host port message\n" , argv [0]); 
+    
+    /* create socket and connect to server */ 
+    connfd = connectsock(argv [1] , argv [2] , "tcp");
+    
+
+    for(t=0;t<atoi(argv[5]);t++)
+    {
+        //combine reposit/withdraw and money
+        //strcpy(send_data, "");
+        memset(send_data, 0, 100);
+        strcpy (send_data,argv[3]);
+        strcat (send_data," ");
+        strcat (send_data,argv[4]);
+        // strcat (send_data,"@");
+
+
+        /* write message to server */ 
+        if ((n = write(connfd , send_data , strlen(send_data)+1 ) ) == -1) 
+            printf("Error : write ()\n"); 
+
+        printf("send_data: %s\n", send_data);
+    }    
+
+
+    /* close client socket */ 
+    close (connfd ); 
+    
+    return 0;
+}
