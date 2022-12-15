@@ -11,4 +11,4 @@ client:
 clean:
 	rm -rf server client
 
-.PHONY: all clean #代表這些任務一定要執行
+.PHONY: all clean

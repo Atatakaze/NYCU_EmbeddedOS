@@ -8,14 +8,9 @@
 #include <stdbool.h>
 #include <sys/socket.h> //the functions of socket
 #include <sys/types.h>  /* Primitive System Data Types */
-// #include <sys/wait.h>   //waitpid
-
 #include <unistd.h> //sleep()
-// #include <signal.h> //signal
-
 
 #define BUFSIZE 128
-
 
 int connectsock(const char *host, const char *service, const char *transport)
 {
