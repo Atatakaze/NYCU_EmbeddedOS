@@ -15,7 +15,7 @@
 #define SEM_KEY 1234
 #define SEM_MODE 0666
 
-int sem;
+int sem, s;
 int amount = 0;
 
 typedef struct
@@ -158,7 +158,7 @@ int main(int argc, char **argv)
   // Creating semaphore
   sem = semget(SEM_KEY, 1, IPC_CREAT | IPC_EXCL | SEM_MODE);
   if (sem < 0){
-    fprintf (stderr , "%s : creation of semaphore %d failed : %s\n" , argv [0] , key , strerror (errno) ); 
+    fprintf (stderr , "%s : creation of semaphore %d failed : %s\n" , argv [0] , SEM_KEY , strerror (errno) ); 
     exit (1); 
   }
   printf("sem created\n");
