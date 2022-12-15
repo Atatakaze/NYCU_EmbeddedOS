@@ -15,7 +15,7 @@
 #define SEM_KEY 1234
 #define SEM_MODE 0666
 
-int sem, s;
+int sem;
 int amount = 0;
 
 typedef struct
@@ -100,11 +100,11 @@ void *connectCallback(void *info)
         value = -w_value;
 
         memset(str, 0, 20);
-        P(s);
+        P(sem);
         amount += value;
 
         printf("After withdraw: %d\n", amount);
-        V(s);
+        V(sem);
       }
       else if(str[0] == 'd'){
         int j = 8;
@@ -116,11 +116,11 @@ void *connectCallback(void *info)
         value = d_value;
 
         memset(str, 0, 20);
-        P(s);
+        P(sem);
         amount += value;
 
         printf("After deposit: %d\n", amount);
-        V(s);
+        V(sem);
       }
 
       index++;
@@ -162,7 +162,7 @@ int main(int argc, char **argv)
     exit (1); 
   }
   printf("sem created\n");
-  semctl(s , 0, SETVAL, 1);
+  semctl(sem , 0, SETVAL, 1);
 
   info_transfer info[NUM_THREADS];
   while (1)
