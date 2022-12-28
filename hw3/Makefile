@@ -28,6 +28,6 @@ socket_utils.o:
 	$(CC) $(CFLAGS) -o socket_utils.o -c socket_utils.c
 
 clean: 
-	${RM} server client server.o client.o socket_utils.o
+	${RM} server client server.o client.o socket_utils.o hw3.o hw3
 
 .PHONY: all clean

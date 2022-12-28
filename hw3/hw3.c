@@ -3,7 +3,8 @@
 #include <string.h>
 #include <unistd.h>  // fork()
 #include <signal.h>  // signal()
-#include <pthread.h> // pthread_create, pthread_join, etc.
+#include <sys/ipc.h>
+#include <sys/shm.h> //for shared memory
 
 #include <sys/wait.h>
 #include <sys/sem.h>
@@ -15,22 +16,44 @@
 #define SEM_KEY 1234
 #define SEM_MODE 0666
 
-typedef struct
-{
-    long t;       //thread number
-    int connfd;   //socket connfd
-    char transmit_buf[BUFSIZE], receive_buf[BUFSIZE], buf[BUFSIZE];
-    char* s;                        // use to seperate each command by '|' and ' '
-    char* substr[30];               // store sub string
+typedef struct{
+    int number ;       //process number
+    int connfd;        //socket connfd
 } info_transfer;
 
 typedef struct AREA{
-    int mild;       // number of mild case
-    int severe;     // number of severe case
+    int mild[9];       // number of mild case
+    int severe[9];     // number of severe case
 } AREA;
 
-int sem;
-AREA area[9];
+int sem, processNumber=0;
+pid_t childpid;
+
+/* shm parameter */
+AREA *area;
+int shmid;
+key_t key;
+
+/* ================================================ */
+/*                  share memory                    */
+/* ================================================ */
+void shmHandler() {
+    /* Detach the share memory segment */
+    shmdt(area);
+    
+    /* Destroy the share memory segment */
+    printf ("[INFO] Destroy the share memory.\n");
+
+    int retval;
+    retval = shmctl(shmid, IPC_RMID, NULL);
+    if ( retval < 0)
+    {
+        fprintf (stderr , "[ERROR]: Remove share memory failed.\n");
+        exit (1);
+    }
+    exit(1);
+}
+
 
 /* ================================================ */
 /*                  Semaphore                       */
@@ -65,7 +88,7 @@ int V(int s){
   }
 }
 
-void intHandler()
+void semHandler()
 {
   printf("[INFO]: Remove semaphore.\n");
   if(semctl(sem, 0, IPC_RMID, 0) < 0){
@@ -77,143 +100,151 @@ void intHandler()
 }
 
 /* ================================================ */
-/*                  Thread                          */
+/*                  process                         */
 /* ================================================ */
-void *connectCallback(void *info)
+void childProcess(info_transfer info)
 {
-    info_transfer *my_info = (info_transfer *)info;
     int i, n, substr_count = 0, which_area, n_report, n_case;
+    char transmit_buf[BUFSIZE], receive_buf[BUFSIZE], buf[BUFSIZE];
+    char* s;                        // use to seperate each command by '|' and ' '
+    char* substr[30];               // store sub string
 
-    printf("[INFO]: Create thread %ld.\n", my_info->t);
+    // share memory attach
+    if ((shmid = shmget(key, sizeof(AREA), 0666)) < 0) {
+        perror("[ERROR]: Fail when shmget()");
+        exit(1);
+    }
+    /* atach the segment to our data space */
+    if ((area = shmat(shmid, NULL, 0)) == (AREA *) -1) {
+        perror("[ERROR]: Fail when shmat()");
+        exit(1);
+    }
+    //printf("[Process %d]: Attach to the share memory.\n", info.number);
 
     while (1)
     {
-        memset(my_info->receive_buf, 0, BUFSIZE);
-        if((n = read(my_info->connfd, my_info->receive_buf, BUFSIZE)) == -1){
+        memset(receive_buf, 0, BUFSIZE);
+        if((n = read(info.connfd, receive_buf, BUFSIZE)) == -1){
             perror("[ERROR]: read()\n");
         }
-        printf(" > [command received](thread %ld): %s\n", my_info->t, my_info->receive_buf);
+        printf(" > [Process %d]: Receive %s\n", info.number, receive_buf);
 
         /* seperate command by the '|' and ' ' */
-        P(sem);
         substr_count = 0;
-        my_info->s = strtok(my_info->receive_buf, " |");
-        while(my_info->s != NULL){
-            my_info->substr[substr_count++] = my_info->s;
-            my_info->s = strtok(NULL, " |");
+        s = strtok(receive_buf, " |");
+        while(s != NULL){
+            substr[substr_count++] = s;
+            s = strtok(NULL, " |");
         }
-        V(sem);
 
         /* command: list (return categories) */
-        if(strcmp(my_info->substr[0], "list") == 0){
-            n = sprintf(my_info->transmit_buf, "1. Confirmed case\n2. Reporting system\n3. Exit\n");
-            if((n = write(my_info->connfd, my_info->transmit_buf, n)) == -1){
+        if(strcmp(substr[0], "list") == 0){
+            memset(transmit_buf, 0, BUFSIZE);
+            n = sprintf(transmit_buf, "1. Confirmed case\n2. Reporting system\n3. Exit\n");
+            if((n = write(info.connfd, transmit_buf, n)) == -1){
                 perror("Error: write()\n");
             }
-            printf(" > [command send](thread %ld): %s\n", my_info->t, my_info->transmit_buf);
+
+            printf(" > [Process %d]: Transmit\n%s\n", info.number, transmit_buf);
         }
         /* command: Confirmed case (return infomation of confirmed cases) */
-        if(strcmp(my_info->substr[0], "Confirmed") == 0){
+        if(strcmp(substr[0], "Confirmed") == 0){
             /* command: Confirmed case */
+            memset(transmit_buf, 0, BUFSIZE);
             P(sem);
             if(substr_count == 2){
-                n = sprintf(my_info->transmit_buf, "0 : %d\n1 : %d\n2 : %d\n3 : %d\n4 : %d\n5 : %d\n6 : %d\n7 : %d\n8 : %d\n", 
-                            (area[0].mild + area[0].severe), (area[1].mild + area[1].severe), (area[2].mild + area[2].severe),
-                            (area[3].mild + area[3].severe), (area[4].mild + area[4].severe), (area[5].mild + area[5].severe), 
-                            (area[6].mild + area[6].severe), (area[7].mild + area[7].severe), (area[8].mild + area[8].severe));
+                n = sprintf(transmit_buf, "0 : %d\n1 : %d\n2 : %d\n3 : %d\n4 : %d\n5 : %d\n6 : %d\n7 : %d\n8 : %d\n", 
+                            (area->mild[0] + area->severe[0]), (area->mild[1] + area->severe[1]), (area->mild[2] + area->severe[2]),
+                            (area->mild[3] + area->severe[3]), (area->mild[4] + area->severe[4]), (area->mild[5] + area->severe[5]), 
+                            (area->mild[6] + area->severe[6]), (area->mild[7] + area->severe[7]), (area->mild[8] + area->severe[8]));
             }
             /* command: Confirmed case | Area x */
             else{
-                which_area = atoi(my_info->substr[3]);
-                n = sprintf(my_info->transmit_buf, "Area %d - Mild : %d | Severe : %d\n", which_area, area[which_area].mild, area[which_area].severe);
+                which_area = atoi(substr[3]);
+                n = sprintf(transmit_buf, "Area %d - Mild : %d | Severe : %d\n", which_area, area->mild[which_area], area->severe[which_area]);
             }
 
-            if((n = write(my_info->connfd, my_info->transmit_buf, n)) == -1){
+            if((n = write(info.connfd, transmit_buf, n)) == -1){
                 perror("Error: write()\n");
             }
             V(sem);
+
+            printf(" > [Process %d]: Transmit\n%s\n", info.number, transmit_buf);
         }
         /* command: Reporting system */
-        if(strcmp(my_info->substr[0], "Reporting") == 0){
+        if(strcmp(substr[0], "Reporting") == 0){
             /* command: Reporting sytem | Area x | Mild/Severe x */
+            memset(transmit_buf, 0, BUFSIZE);
             P(sem);
-            n = sprintf(my_info->transmit_buf, "Please wait a few seconds...\n");
-            if((n = write(my_info->connfd, my_info->transmit_buf, n)) == -1){
+            n = sprintf(transmit_buf, "The ambulance is on it's way...\n");
+            if((n = write(info.connfd, transmit_buf, n)) == -1){
                 perror("Error: write()\n");
             }
+            printf(" > [Process %d]: Transmit\n%s\n", info.number, transmit_buf);
 
             n_report = ((substr_count - 2) / 4);
             for(i = 0; i < n_report; i++){
-                which_area = atoi(my_info->substr[(3 + 4 * i)]);
-                n_case = atoi(my_info->substr[(5 + 4 * i)]);
-                if(strcmp(my_info->substr[(4 + 4 * i)], "Mild") == 0){
-                    area[which_area].mild += n_case;
+                which_area = atoi(substr[(3 + 4 * i)]);
+                n_case = atoi(substr[(5 + 4 * i)]);
+                if(strcmp(substr[(4 + 4 * i)], "Mild") == 0){
+                    area->mild[which_area] += n_case;
                 }
                 else{
-                    area[which_area].severe += n_case;
+                    area->severe[which_area] += n_case;
                 }
             }
 
             for(i = 0; i < n_report; i++){
-                if(which_area < atoi(my_info->substr[(3 + 4 * i)])){
-                    which_area = atoi(my_info->substr[(3 + 4 * i)]);
+                if(which_area < atoi(substr[(3 + 4 * i)])){
+                    which_area = atoi(substr[(3 + 4 * i)]);
                 }
-            }
-            sleep(which_area);
-
-            memset(my_info->buf, 0, BUFSIZE);
-            for(i = 0; i < n_report; i++){
-                strcat(my_info->buf, "Area ");
-                strcat(my_info->buf, my_info->substr[(3 + 4 * i)]);
-                strcat(my_info->buf, " | ");
-                strcat(my_info->buf, my_info->substr[(4 + 4 * i)]);
-                strcat(my_info->buf, " ");
-                strcat(my_info->buf, my_info->substr[(5 + 4 * i)]);
-                strcat(my_info->buf, "\n");
-            }
-
-            if((n = write(my_info->connfd, my_info->buf, strlen(my_info->buf))) == -1){
-                perror("Error: write()\n");
             }
             V(sem);
+
+            sleep(which_area);
+
+            memset(buf, 0, BUFSIZE);
+            for(i = 0; i < n_report; i++){
+                strcat(buf, "Area ");
+                strcat(buf, substr[(3 + 4 * i)]);
+                strcat(buf, " | ");
+                strcat(buf, substr[(4 + 4 * i)]);
+                strcat(buf, " ");
+                strcat(buf, substr[(5 + 4 * i)]);
+                strcat(buf, "\n");
+            }
+
+            if((n = write(info.connfd, buf, strlen(buf))) == -1){
+                perror("Error: write()\n");
+            }
+            printf(" > [Process %d]: Transmit\n%s\n", info.number, buf);
         }
         /* command: Exit (exit system) */
-        if(strcmp(my_info->substr[0], "Exit") == 0){
+        if(strcmp(substr[0], "Exit") == 0){
             break;
         }
-
-    close(my_info->connfd);
-    pthread_exit((void *)0);
     }
+    close(info.connfd);
+    exit(0);
+}
+
+void childHandler(int signum)
+{
+    while (waitpid(-1, NULL, WNOHANG) > 0);
 }
 
 
 int main(int argc, char *argv[])
 {
-    signal(SIGINT, intHandler);
-
-    int sockfd, connfd, rc, i;
-    long n_thread = 0;
+    int sockfd, connfd, i;
 
     /* socket */
     struct sockaddr_in cln_addr;
     socklen_t sLen = sizeof(cln_addr);
-  
-    /* thread */
-    pthread_t thread[NUM_THREADS];
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
     if (argc != 2){
         printf("[ERROR]: Usage: %s <port>\n", argv[0]);
         exit(-1);
-    }
-
-    /* initialization of infomation of 8 area */
-    for(i = 0; i < 9; i++){
-        area[i].mild = 0;
-        area[i].severe = 0;
     }
 
     /* create socket server */
@@ -232,7 +263,29 @@ int main(int argc, char *argv[])
     printf("[INFO] sem created.\n");
     semctl(sem , 0, SETVAL, 1);
 
-    info_transfer info[NUM_THREADS];
+    signal(SIGINT, semHandler);
+    signal(SIGCHLD, childHandler);
+    signal(SIGINT, shmHandler);
+
+    /* Create the segment */
+    key = 4321;
+    if ((shmid = shmget(key ,sizeof(AREA), IPC_CREAT | 0666)) < 0) {
+        perror("shmget");
+        exit (1);
+    }
+    /* Attach the segment */    
+    if ((area = (AREA *)shmat(shmid, NULL, 0)) == (AREA *) -1) {
+        perror("shmat");
+        exit (1);
+    }
+
+    /* initialization of infomation of 8 area */
+    for(i = 0; i < 9; i++){
+        area->mild[i] = 0;
+        area->severe[i] = 0;
+    }
+
+    info_transfer info;
     while (1)
     {
         /* waiting for connection */
@@ -242,16 +295,27 @@ int main(int argc, char *argv[])
             break;
         }
 
-        info[n_thread].connfd = connfd; //the new thread's connfd
-        info[n_thread].t = n_thread;           //thread number
+        /* create new process */
+        childpid = fork();
+        info.connfd = connfd;
+        info.number = processNumber;
 
-        rc = pthread_create(&thread[n_thread], &attr, connectCallback, (void *)&info[n_thread]);
-        if(rc){
-            printf("[ERROR]: Return code from pthread_create() is %d.\n", rc);
-            exit(-1);
+        /* child process */
+        if (childpid == 0){
+            childProcess(info);
+            break;
+        }
+        /* parent process */
+        else if (childpid > 0){ 
+            //printf("[INFO] Process ID: %d\n", childpid);
+        }
+        else{
+            perror("[ERROR]: Fail to fork.\n");
+            break;
         }
 
-        n_thread++;
+        processNumber++;
     }
+    close(sockfd);
     return 0;
 }
