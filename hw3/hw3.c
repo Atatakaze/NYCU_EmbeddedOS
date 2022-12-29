@@ -54,7 +54,7 @@ void intHandler()
 
     /* Destroy semaphore */
     if(semctl(sem, 0, IPC_RMID, 0) < 0){
-        perror(stderr, "[ERROR]: Fail to remove semaphore.\n");
+        perror("[ERROR]: Fail to remove semaphore.\n");
         exit(1);
     }
     printf("[INFO]: Remove semaphore %d.\n", SEM_KEY);
@@ -108,7 +108,7 @@ int V(int s)
 /* ================================================ */
 void childProcess(info_transfer info)
 {
-    int i, n, substr_count = 0, which_area, n_report, n_case;
+    int i, n, substr_count = 0, which_area, n_case;
     char transmit_buf[BUFSIZE], receive_buf[BUFSIZE];
     char* s;                        // use to seperate each command by '|' and ' '
     char* substr[30];               // store sub string
