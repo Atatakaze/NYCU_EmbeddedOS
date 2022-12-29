@@ -54,7 +54,7 @@ void intHandler()
 
     /* Destroy semaphore */
     if(semctl(sem, 0, IPC_RMID, 0) < 0){
-        perror("[ERROR]: Fail to remove semaphore %d.\n", SEM_KEY);
+        perror(stderr, "[ERROR]: Fail to remove semaphore.\n");
         exit(1);
     }
     printf("[INFO]: Remove semaphore %d.\n", SEM_KEY);
@@ -192,8 +192,8 @@ void childProcess(info_transfer info)
         /* command: Reporting system */
         if(strcmp(substr[0], "Reporting") == 0){
             /* command: Reporting sytem | Area x | Mild/Severe x */
-            char temp = {0};
-            char wait = {0};
+            char temp[100] = {0};
+            char wait[100] = {0};
 
             n = sprintf(wait, "The ambulance is on it's way...\n");
             memset(transmit_buf, 0, BUFSIZE);
