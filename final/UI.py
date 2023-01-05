@@ -22,4 +22,3 @@ receive_buf = connfd.recv(1024)
 print('[Server]: Receive ' + receive_buf.decode())
 
 sockfd.close()
-connfd.close()

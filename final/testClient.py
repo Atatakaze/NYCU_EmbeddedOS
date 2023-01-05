@@ -11,9 +11,11 @@ sockfd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sockfd.connect((host, port))
 
 print('[Client]: Connect to %s:%s' %(host, str(port)))
-
-transmit_buf = 'hello~ testing...' 
-print('[Client]: Send ' + transmit_buf)
-sockfd.send(transmit_buf.encode())
+while(True):
+    transmit_buf = input("[Client] Send: ")
+    if transmit_buf == 'exit':
+        break 
+    #print('[Client]: Send ' + transmit_buf)
+    sockfd.send(transmit_buf.encode())
 
 sockfd.close()
