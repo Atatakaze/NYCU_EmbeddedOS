@@ -90,21 +90,22 @@ class MainWidget(QWidget):
         self.game_background_img.setScaledContents(True)
 
         # beats
-        self.redDot = []
-        self.blueDot = []
+        self.redBeats = []
+        self.blueBeats = []
         pixmap_r = QPixmap("./images/red.png")
         pixmap_b = QPixmap("./images/blue.png")
         for i in range(20):
             r_img = QLabel(self)
             r_img.setPixmap(pixmap_r)
             r_img.setScaledContents(True)
-            self.redDot.append(r_img)
+            self.redBeats.append(r_img)
 
             b_img = QLabel(self)
             b_img.setPixmap(pixmap_b)
             b_img.setScaledContents(True)
-            self.blueDot.append(b_img)
+            self.blueBeats.append(b_img)
 
+        # if the beats visible or not red[20], blue[20]
         self.sequence = np.zeros((2, 20))
 
         # timer label
@@ -236,10 +237,10 @@ class MainWidget(QWidget):
         0: 148 right: 620 left: 102
         """
         for i in range(20):
-            self.redDot[i].setGeometry(148, 135, 30, 30)
-            self.redDot[i].setVisible(False)
-            self.blueDot[i].setGeometry(148, 135, 30, 30)
-            self.blueDot[i].setVisible(False)
+            self.redBeats[i].setGeometry(148, 135, 30, 30)
+            self.redBeats[i].setVisible(False)
+            self.blueBeats[i].setGeometry(148, 135, 30, 30)
+            self.blueBeats[i].setVisible(False)
 
     def repaint(self):
         if self.page == 'main page':
@@ -249,10 +250,10 @@ class MainWidget(QWidget):
             self.return_button.setVisible(False)
             
             for i in range(20):
-                self.redDot[i].move(148, 135)
-                self.redDot[i].setVisible(False)
-                self.blueDot[i].move(148, 135)
-                self.blueDot[i].setVisible(False)
+                self.redBeats[i].move(148, 135)
+                self.redBeats[i].setVisible(False)
+                self.blueBeats[i].move(148, 135)
+                self.blueBeats[i].setVisible(False)
             
             self.background_img.move(0, 0)
             self.background_img.setVisible(True)
@@ -290,13 +291,13 @@ class MainWidget(QWidget):
 
             for i in range(20):
                 if self.sequence[0][i] == 0:
-                    self.redDot[i].setVisible(False)
+                    self.redBeats[i].setVisible(False)
                 if self.sequence[0][i] == 1:
-                    self.redDot[i].setVisible(True)
+                    self.redBeats[i].setVisible(True)
                 if self.sequence[1][i] == 0:
-                    self.blueDot[i].setVisible(False)
+                    self.blueBeats[i].setVisible(False)
                 if self.sequence[1][i] == 1:
-                    self.blueDot[i].setVisible(True)
+                    self.blueBeats[i].setVisible(True)
 
 
 if __name__ == '__main__':
