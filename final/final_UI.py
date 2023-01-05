@@ -42,6 +42,7 @@ class RepeatTimer(Timer):
 class MainWidget(QWidget):
     def __init__(self, port):
         super().__init__()
+        self.score = 0
         self.port = port
         self.initUI()
 
@@ -112,16 +113,15 @@ class MainWidget(QWidget):
         self.timerLabel = QLabel(self)
         self.timerLabel.setAlignment(Qt.AlignCenter)
 
-        # receive buffer
-        self.receiveLabel = QLabel(self)
-        self.receiveLabel.setFont(QFont('Arial', 20))
-        self.receiveLabel.setAlignment(Qt.AlignCenter)
+        # score board
+        self.scoreLabel = QLabel("Score: 0", self)
+        self.scoreLabel.setFont(QFont('Arial', 15, QFont.Bold))
+        self.scoreLabel.setAlignment(Qt.AlignCenter)
 
         # return button
         self.return_button = QPushButton(self)
         self.return_button.setShortcut('Ctrl+D')
         self.return_button.clicked.connect(self.onButtonClick)
-
 
         # ========================================== #
         #                 Display                    #
@@ -150,12 +150,12 @@ class MainWidget(QWidget):
         #                 Timer                      #
         # ========================================== #
         self.counter = 0
-        self.timer = RepeatTimer(1, self.timerInterrupt)
+        self.timer = RepeatTimer(0.01, self.timerInterrupt)
         self.timer.start()
 
     def timerInterrupt(self):
         self.counter += 1
-        self.timerLabel.setText('Counter ' + str(self.counter / 1))
+        self.timerLabel.setText('Counter ' + str(self.counter / 100))
         self.repaint()
 
     def shut_down(self):
@@ -175,19 +175,20 @@ class MainWidget(QWidget):
             self.shut_down()
 
         if receive_buf == 'red':
+            self.score += 1
             self.sequence[0][0] = 1
             self.sequence[1][0] = 0
 
         if receive_buf == 'blue':
+            self.score += 1
             self.sequence[0][0] = 0
             self.sequence[1][0] = 1
 
-        self.receiveLabel.setText(receive_buf)
+        self.scoreLabel.setText("Score: " + str(self.score))
         self.repaint()
 
     def threadFinished(self):
         print(" > [INFO] Thread finished.")
-        #self.sockClient.connfd.close()
 
     def onButtonClick(self):
         sender = self.sender()
@@ -207,6 +208,9 @@ class MainWidget(QWidget):
             self.repaint()
 
     def paint(self):
+        self.shut_button.setGeometry(530, 20, 1, 1)
+        self.shut_button.setVisible(True)
+        
         self.background_img.setGeometry(0, 0, 650, 400)
         self.background_img.setVisible(True)
 
@@ -218,16 +222,13 @@ class MainWidget(QWidget):
         self.button2.setGeometry(350, 280, 130, 60)
         self.button2.setVisible(True)
 
-        self.shut_button.setGeometry(530, 20, 80, 20)
-        self.shut_button.setVisible(True)
-        
-        self.receiveLabel.move(250, 180)
-        self.receiveLabel.setVisible(False)
-
         self.timerLabel.setGeometry(280, 20, 80, 20)
         self.timerLabel.setVisible(False)
 
-        self.return_button.setGeometry(530, 50, 80, 20)
+        self.scoreLabel.setGeometry(500, 50, 150, 40)
+        self.scoreLabel.setVisible(False)
+
+        self.return_button.setGeometry(530, 50, 1, 1)
         self.return_button.setVisible(False)
 
         self.game_background_img.setGeometry(0, 0, 650, 400)
@@ -245,9 +246,9 @@ class MainWidget(QWidget):
     def repaint(self):
         if self.page == 'main page':
             self.game_background_img.setVisible(False)
-            self.receiveLabel.setVisible(False)
             self.timerLabel.setVisible(False)
             self.return_button.setVisible(False)
+            self.scoreLabel.setVisible(False)
             
             for i in range(20):
                 self.redBeats[i].move(148, 135)
@@ -255,19 +256,12 @@ class MainWidget(QWidget):
                 self.blueBeats[i].move(148, 135)
                 self.blueBeats[i].setVisible(False)
             
-            self.background_img.move(0, 0)
             self.background_img.setVisible(True)
 
-            self.welcomeLabel.move(190, 180)
-            self.welcomeLabel.setVisible(True)
-
-            self.button1.move(190, 280)
-            self.button1.setVisible(True)
-            self.button2.move(350, 280)
-            self.button2.setVisible(True)
-
-            self.shut_button.move(530, 20)
             self.shut_button.setVisible(True)
+            self.welcomeLabel.setVisible(True)
+            self.button1.setVisible(True)
+            self.button2.setVisible(True)
         
         if self.page == 'stand-alone':
             self.background_img.setVisible(False)
@@ -277,17 +271,10 @@ class MainWidget(QWidget):
 
             self.game_background_img.setVisible(True)
 
-            self.shut_button.move(530, 20)
             self.shut_button.setVisible(True)
-
-            self.receiveLabel.move(250, 180)
-            self.receiveLabel.setVisible(True)
-
-            self.timerLabel.move(280, 20)
-            self.timerLabel.setVisible(True)
-
-            self.return_button.move(530, 50)
             self.return_button.setVisible(True)
+            self.scoreLabel.setVisible(True)
+            self.timerLabel.setVisible(True)
 
             for i in range(20):
                 if self.sequence[0][i] == 0:
